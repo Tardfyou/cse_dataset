@@ -1,0 +1,777 @@
+type,device,json,instruction,input,output
+高级防火墙,Cisco ASA (Adaptive Security Appliance),,配置静态 NAT 以允许内部服务器对外部可见。,内部服务器 IP 地址: 192.168.1.100，外部 IP 地址: 203.0.113.10。,"1. 进入配置模式:\n 指令: `configure terminal`\n\n2. 创建对象网络并定义内部 IP 地址:\n 指令: `object network obj_static_nat`\n `host 192.168.1.100`\n\n3. 定义外部 IP 地址并配置静态 NAT:\n 指令: `nat (inside,outside) static 203.0.113.10`\n\n4. 退出配置模式:\n 指令: `exit`"
+,Cisco ASA (Adaptive Security Appliance),,配置访问控制列表以允许 HTTP 流量进入内部网络。,内部网络 IP 范围: 192.168.1.0/24，外部访问 IP 范围: 0.0.0.0/0。,1. 进入配置模式:\n 指令: `configure terminal`\n\n2. 创建访问控制列表 (ACL):\n 指令: `access-list ACL_INBOUND extended permit tcp any 192.168.1.0 255.255.255.0 eq 80`\n\n3. 应用 ACL 到外部接口:\n 指令: `access-group ACL_INBOUND in interface outside`\n\n4. 退出配置模式:\n 指令: `exit`
+,Cisco ASA (Adaptive Security Appliance),,配置站点到站点 VPN。,本地网络: 192.168.1.0/24，远程网络: 10.10.10.0/24，远程 VPN 网关: 203.0.113.20。,1. 进入配置模式:\n 指令: `configure terminal`\n\n2. 创建 IKEv1 策略:\n 指令: `crypto ikev1 policy 10`\n `authentication pre-share`\n `encryption aes`\n `hash sha`\n `group 2`\n `lifetime 86400`\n\n3. 定义预共享密钥:\n 指令: `tunnel-group 203.0.113.20 type ipsec-l2l`\n `tunnel-group 203.0.113.20 ipsec-attributes`\n `pre-shared-key mysecretkey`\n\n4. 创建 IPSec 传输映射:\n 指令: `crypto ipsec ikev1 transform-set TS esp-aes esp-sha-hmac`\n\n5. 创建加密域并应用到传输映射:\n 指令: `crypto map MYMAP 10 ipsec-isakmp`\n `set peer 203.0.113.20`\n `set transform-set TS`\n `match address 100`\n\n6. 应用加密映射到外部接口:\n 指令: `interface outside`\n `crypto map MYMAP`\n\n7. 退出配置模式:\n 指令: `exit`
+,Cisco ASA (Adaptive Security Appliance),,配置双因素身份验证。,双因素身份验证服务器 IP 地址: 192.168.1.200。,1. 进入配置模式:\n 指令: `configure terminal`\n\n2. 配置 AAA 服务器组:\n 指令: `aaa-server DUO_SERVER protocol radius`\n `aaa-server DUO_SERVER (inside) host 192.168.1.200`\n `key mysecretkey`\n\n3. 应用双因素身份验证到 VPN 连接:\n 指令: `tunnel-group DefaultRAGroup general-attributes`\n `authentication-server-group DUO_SERVER`\n\n4. 退出配置模式:\n 指令: `exit`
+,Cisco ASA (Adaptive Security Appliance),,配置 DMZ 区域。,DMZ 网络 IP 范围: 192.168.2.0/24。,"1. 进入配置模式:\n 指令: `configure terminal`\n\n2. 配置 DMZ 接口并分配 IP 地址:\n 指令: `interface GigabitEthernet1/2`\n `nameif DMZ`\n `security-level 50`\n `ip address 192.168.2.1 255.255.255.0`\n\n3. 创建对象网络并定义 DMZ 网络范围:\n 指令: `object network obj_dmz`\n `subnet 192.168.2.0 255.255.255.0`\n\n4. 配置 NAT 以允许 DMZ 到外部网络的访问:\n 指令: `nat (DMZ,outside) dynamic interface`\n\n5. 退出配置模式:\n 指令: `exit`"
+,Palo Alto Networks Next-Generation Firewall,,配置静态路由以将流量引导到特定的下一跳网关。,目标网络: 10.1.1.0/24，下一跳网关: 192.168.1.1。,1. 进入配置模式:\n 指令: `configure`\n\n2. 进入虚拟路由配置:\n 指令: `set network virtual-router default`\n\n3. 添加静态路由:\n 指令: `set routing-table ip static-route route-to-10.1.1.0/24 interface ethernet1/1 next-hop 192.168.1.1`\n\n4. 提交配置:\n 指令: `commit`
+,Palo Alto Networks Next-Generation Firewall,,配置安全策略以允许 HTTP 流量从信任区到非信任区。,源区域: trust，目标区域: untrust，服务: HTTP。,1. 进入配置模式:\n 指令: `configure`\n\n2. 创建新的安全策略:\n 指令: `set rulebase security rules allow-http`\n\n3. 设置源和目标区域:\n 指令: `set rulebase security rules allow-http from trust`\n `set rulebase security rules allow-http to untrust`\n\n4. 设置服务为 HTTP:\n 指令: `set rulebase security rules allow-http service application-default`\n\n5. 设置动作为允许:\n 指令: `set rulebase security rules allow-http action allow`\n\n6. 提交配置:\n 指令: `commit`
+,Palo Alto Networks Next-Generation Firewall,,配置NAT以将内部服务器的私有IP映射到公共IP。,内部服务器 IP 地址: 192.168.1.10，公共 IP 地址: 203.0.113.10。,1. 进入配置模式:\n 指令: `configure`\n\n2. 创建 NAT 规则:\n 指令: `set rulebase nat rules nat-rule source zone trust`\n `set rulebase nat rules nat-rule destination zone untrust`\n\n3. 设置源地址翻译:\n 指令: `set rulebase nat rules nat-rule source translation dynamic-ip-and-port interface-address`\n `set rulebase nat rules nat-rule source translation dynamic-ip-and-port interface-address interface ethernet1/1`\n\n4. 提交配置:\n 指令: `commit`
+,Palo Alto Networks Next-Generation Firewall,,配置SSL VPN以允许远程用户通过安全通道访问内部网络。,VPN 网关 IP 地址: 203.0.113.20。,1. 进入配置模式:\n 指令: `configure`\n\n2. 创建 VPN 区域:\n 指令: `set network zone VPN zone-type layer3`\n\n3. 配置 VPN 接口:\n 指令: `set network interface ethernet1/2 zone VPN`\n `set network interface ethernet1/2 ip 203.0.113.20/24`\n\n4. 配置 VPN 网关和 SSL 设置:\n 指令: `set global-protect global-protect-gateway gp-gateway external-gateway certificate gp-cert`\n `set global-protect global-protect-gateway gp-gateway external-gateway tunnel-interface ethernet1/2`\n\n5. 提交配置:\n 指令: `commit`
+,Palo Alto Networks Next-Generation Firewall,,配置防火墙升级以确保设备运行最新的安全特性。,新固件版本: 10.1.4。,1. 登录到防火墙 Web 界面。\n\n2. 导航到设备 > 软件。\n\n3. 检查更新并下载版本 10.1.4。\n\n4. 安装新固件。\n\n5. 提交配置并重启设备以应用更新。
+,Fortinet FortiGate,,配置静态路由以将流量引导到特定的下一跳网关。,目标网络: 10.1.1.0/24，下一跳网关: 192.168.1.1。,1. 进入配置模式:\n 指令: `config router static`\n\n2. 添加静态路由:\n 指令: `edit 1`\n `set dst 10.1.1.0/24`\n `set gateway 192.168.1.1`\n `set device port1`\n\n3. 提交配置并退出:\n 指令: `end`
+,Fortinet FortiGate,,配置安全策略以允许 HTTP 流量从内部网络到外部网络。,源接口: port1，目标接口: port2，服务: HTTP。,1. 进入配置模式:\n 指令: `config firewall policy`\n\n2. 创建新的安全策略:\n 指令: `edit 0`\n `set srcintf port1`\n `set dstintf port2`\n `set srcaddr all`\n `set dstaddr all`\n `set action accept`\n `set schedule always`\n `set service HTTP`\n `set logtraffic all`\n\n3. 提交配置并退出:\n 指令: `next`\n `end`
+,Fortinet FortiGate,,配置NAT以将内部服务器的私有IP映射到公共IP。,内部服务器 IP 地址: 192.168.1.10，公共 IP 地址: 203.0.113.10。,1. 进入配置模式:\n 指令: `config firewall ippool`\n\n2. 创建 IP 池:\n 指令: `edit 'nat_pool'`\n `set startip 203.0.113.10`\n `set endip 203.0.113.10`\n `set type one-to-one`\n\n3. 退出并进入防火墙策略配置:\n 指令: `next`\n `config firewall policy`\n\n4. 创建 NAT 规则:\n 指令: `edit 0`\n `set srcintf port1`\n `set dstintf port2`\n `set srcaddr 'all'`\n `set dstaddr 'all'`\n `set action accept`\n `set schedule 'always'`\n `set service 'ALL'`\n `set nat enable`\n `set ippool enable`\n `set poolname 'nat_pool'`\n\n5. 提交配置并退出:\n 指令: `next`\n `end`
+,Fortinet FortiGate,,配置SSL VPN以允许远程用户通过安全通道访问内部网络,VPN 网关 IP 地址: 203.0.113.20。,1. 进入配置模式:\n 指令: `config vpn ssl settings`\n\n2. 设置 VPN 接口:\n 指令: `set servercert 'Fortinet_Factory'`\n `set tunnel-ip-pools 'SSLVPN_TUNNEL_ADDR1'`\n `set tunnel-ipv6-pools 'SSLVPN_TUNNEL_IPv6_ADDR1'`\n `set port 443`\n `set source-interface 'port1'`\n `set source-address 'all'`\n `set default-portal 'web-access'`\n\n3. 退出并配置用户组:\n 指令: `end`\n `config user group`\n\n4. 创建用户组并添加成员:\n 指令: `edit 'SSL_VPN_User_Group'`\n `set member 'SSL_VPN_Users'`\n\n5. 提交配置并退出:\n 指令: `next`\n `end`
+,Fortinet FortiGate,,配置防火墙升级以确保设备运行最新的安全特性。,新固件版本: 6.4.5。,1. 登录到 FortiGate 管理界面。\n\n2. 导航到系统 > 固件。\n\n3. 检查更新并下载版本 6.4.5。\n\n4. 安装新固件。\n\n5. 提交配置并重启设备以应用更新。
+,Check Point Firewall,,配置静态路由以将流量引导到特定的下一跳网关。,目标网络: 10.1.1.0/24，下一跳网关: 192.168.1.1。,1. 进入 clish 配置模式:\n 指令: `clish`\n\n2. 添加静态路由:\n 指令: `set static-route 10.1.1.0/24 nexthop gateway address 192.168.1.1 on`\n\n3. 保存配置:\n 指令: `save config`
+,Check Point Firewall,,配置安全策略以允许 HTTP 流量从内部网络到外部网络。,源接口: 内部网络，目标接口: 外部网络，服务: HTTP。,1. 打开 SmartDashboard。\n\n2. 创建新的安全策略规则:\n a. 右键点击策略界面并选择“添加规则”。\n b. 设置源为内部网络。\n c. 设置目的地为外部网络。\n d. 设置服务为 HTTP。\n e. 设置动作为“接受”。\n\n3. 安装策略:\n a. 点击“安装政策”按钮。\n b. 选择目标网关并点击“确定”。
+,Check Point Firewall,,配置NAT以将内部服务器的私有IP映射到公共IP。,内部服务器 IP 地址: 192.168.1.10，公共 IP 地址: 203.0.113.10。,1. 打开 SmartDashboard。\n\n2. 创建 NAT 规则:\n a. 右键点击 NAT 规则界面并选择“添加规则”。\n b. 设置源地址为内部服务器 IP 地址 192.168.1.10。\n c. 设置目的地地址为公共 IP 地址 203.0.113.10。\n d. 选择“源地址翻译”为 Hide NAT 或 Static NAT。\n\n3. 安装策略:\n a. 点击“安装政策”按钮。\n b. 选择目标网关并点击“确定”。
+,Check Point Firewall,,配置 VPN 以允许远程用户通过安全通道访问内部网络。,VPN 网关 IP 地址: 203.0.113.20。,1. 打开 SmartDashboard。\n\n2. 配置 VPN 网关:\n a. 导航到网络对象并选择“添加网关”。\n b. 设置名称和 IP 地址为 203.0.113.20。\n c. 选择 VPN 选项卡并启用 VPN。\n\n3. 配置 VPN 用户组:\n a. 导航到用户对象并选择“添加用户组”。\n b. 设置用户组名称并添加成员。\n\n4. 配置 VPN 社区:\n a. 导航到 VPN 社区并选择“添加 VPN 社区”。\n b. 设置社区名称并添加网关和用户组。\n\n5. 安装策略:\n a. 点击“安装政策”按钮。\n b. 选择目标网关并点击“确定”。
+,Check Point Firewall,,配置防火墙升级以确保设备运行最新的安全特性。,新固件版本: R80.40。,1. 登录到 Check Point 管理界面。\n\n2. 导航到系统 > 软件管理。\n\n3. 检查更新并下载版本 R80.40。\n\n4. 安装新固件。\n\n5. 提交配置并重启设备以应用更新。
+,SonicWall,,配置静态路由以将流量引导到特定的下一跳网关。,目标网络: 10.1.1.0/24，下一跳网关: 192.168.1.1。,1. 登录到 SonicWall 管理界面。\n\n2. 导航到 `Network` > `Routing`。\n\n3. 点击 `Add` 添加静态路由。\n\n4. 配置静态路由参数:\n a. 在 `Destination Network` 中输入 `10.1.1.0/24`。\n b. 在 `Gateway` 中输入 `192.168.1.1`。\n c. 选择 `Interface` 为适当的接口。\n\n5. 点击 `OK` 保存配置。
+,SonicWall,,配置安全策略以允许 HTTP 流量从内部网络到外部网络。,源接口: LAN，目标接口: WAN，服务: HTTP。,1. 登录到 SonicWall 管理界面。\n\n2. 导航到 `Firewall` > `Access Rules`。\n\n3. 在 `From LAN to WAN` 选项卡下点击 `Add`。\n\n4. 配置安全策略参数:\n a. 设置 `Source` 为 `LAN Subnets`。\n b. 设置 `Destination` 为 `Any`。\n c. 设置 `Service` 为 `HTTP`。\n d. 设置 `Action` 为 `Allow`。\n\n5. 点击 `OK` 保存配置。
+,SonicWall,,配置NAT以将内部服务器的私有IP映射到公共IP。,内部服务器 IP 地址: 192.168.1.10，公共 IP 地址: 203.0.113.10。,1. 登录到 SonicWall 管理界面。\n\n2. 导航到 `Network` > `NAT Policies`。\n\n3. 点击 `Add` 添加 NAT 规则。\n\n4. 配置 NAT 规则参数:\n a. 设置 `Original Source` 为 `Any`。\n b. 设置 `Translated Source` 为 `203.0.113.10`。\n c. 设置 `Original Destination` 为 `192.168.1.10`。\n d. 设置 `Translated Destination` 为 `Original`。\n e. 设置 `Original Service` 为 `Any`。\n f. 设置 `Translated Service` 为 `Original`。\n g. 选择适当的 `Inbound Interface` 和 `Outbound Interface`。\n\n5. 点击 `OK` 保存配置。
+,SonicWall,,配置 VPN 以允许远程用户通过安全通道访问内部网络。,VPN 网关 IP 地址: 203.0.113.20。,1. 登录到 SonicWall 管理界面。\n\n2. 导航到 `VPN` > `Settings`。\n\n3. 点击 `Add` 添加 VPN 策略。\n\n4. 配置 VPN 策略参数:\n a. 设置 `Policy Type` 为 `Site to Site`。\n b. 设置 `Authentication Method` 为 `IKE using Preshared Secret`。\n c. 设置 `Name` 为所需名称。\n d. 设置 `IPSec Primary Gateway Name or Address` 为 `203.0.113.20`。\n e. 输入 `Shared Secret`。\n\n5. 配置 `Network` 选项卡:\n a. 设置 `Local Networks` 为内部网络。\n b. 设置 `Destination Networks` 为远程网络。\n\n6. 点击 `OK` 保存配置。
+,SonicWall,,配置防火墙升级以确保设备运行最新的安全特性。,新固件版本: 6.5.4.4。,1. 登录到 SonicWall 管理界面。\n\n2. 导航到 `System` > `Settings`。\n\n3. 点击 `Upload New Firmware` 并选择版本 6.5.4.4 的固件文件。\n\n4. 点击 `Upload` 上传固件文件。\n\n5. 固件上传完成后，点击 `Boot` 旁边的 `Boot New Firmware with Current Configuration`。\n\n6. 设备将重启并应用新的固件版本。
+,Barracuda NextGen Firewall,,配置静态路由以将流量引导到特定的下一跳网关。,目标网络: 10.1.1.0/24，下一跳网关: 192.168.1.1。,1. 登录到 Barracuda NextGen Firewall 管理界面。\n\n2. 导航到 `Configuration` > `Box` > `Network`。\n\n3. 点击 `Routing` 并选择 `Static Routes`。\n\n4. 点击 `Add` 添加静态路由。\n\n5. 配置静态路由参数:\n a. 在 `Target Network Address` 中输入 `10.1.1.0/24`。\n b. 在 `Gateway Address` 中输入 `192.168.1.1`。\n\n6. 点击 `OK` 保存配置。\n\n7. 点击 `Send Changes`，然后点击 `Activate` 以应用配置。
+,Barracuda NextGen Firewall,,配置安全策略以允许 HTTP 流量从内部网络到外部网络。,源接口: 内部网络，目标接口: 外部网络，服务: HTTP,1. 登录到 Barracuda NextGen Firewall 管理界面。\n\n2. 导航到 `Forwarding Firewall` > `Rules`。\n\n3. 点击 `Add` 添加新的安全策略规则。\n\n4. 配置安全策略参数:\n a. 设置 `Name` 为所需名称。\n b. 设置 `Action` 为 `Allow`。\n c. 设置 `Source` 为内部网络。\n d. 设置 `Destination` 为外部网络。\n e. 设置 `Service` 为 `HTTP`。\n\n5. 点击 `OK` 保存配置。\n\n6. 点击 `Send Changes`，然后点击 `Activate` 以应用配置。
+,Barracuda NextGen Firewall,,配置NAT以将内部服务器的私有IP映射到公共IP。,内部服务器 IP 地址: 192.168.1.10，公共 IP 地址: 203.0.113.10。,1. 登录到 Barracuda NextGen Firewall 管理界面。\n\n2. 导航到 `Forwarding Firewall` > `Rules`。\n\n3. 点击 `Add` 添加新的 NAT 规则。\n\n4. 配置 NAT 规则参数:\n a. 设置 `Name` 为所需名称。\n b. 设置 `Action` 为 `Dnat`。\n c. 设置 `Source` 为 `Any`。\n d. 设置 `Destination` 为 `203.0.113.10`。\n e. 设置 `New IP Address` 为 `192.168.1.10`。\n\n5. 点击 `OK` 保存配置。\n\n6. 点击 `Send Changes`，然后点击 `Activate` 以应用配置。
+,Barracuda NextGen Firewall,,配置 VPN 以允许远程用户通过安全通道访问内部网络。,VPN 网关 IP 地址: 203.0.113.20。,1. 登录到 Barracuda NextGen Firewall 管理界面。\n\n2. 导航到 `Configuration` > `VPN`。\n\n3. 点击 `Add` 添加 VPN 配置。\n\n4. 配置 VPN 参数:\n a. 设置 `VPN Type` 为 `IPsec`。\n b. 设置 `Remote Gateway` 为 `203.0.113.20`。\n c. 输入 `Shared Secret`。\n\n5. 配置 `Local Networks` 和 `Remote Networks`。\n\n6. 点击 `OK` 保存配置。\n\n7. 点击 `Send Changes`，然后点击 `Activate` 以应用配置。
+,Barracuda NextGen Firewall,,配置防火墙升级以确保设备运行最新的安全特性。,新固件版本: 7.2.3。,1. 登录到 Barracuda NextGen Firewall 管理界面。\n\n2. 导航到 `Configuration` > `Box` > `Advanced Configuration` > `Firmware Update`。\n\n3. 点击 `Check for Updates`。\n\n4. 在 `Available Updates` 中选择版本 7.2.3。\n\n5. 点击 `Download and Install`。\n\n6. 安装完成后，点击 `Reboot` 重启设备以应用更新。
+,WatchGuard Firebox,,配置静态路由以将流量引导到特定的下一跳网关。,目标网络: 10.1.1.0/24，下一跳网关: 192.168.1.1。,1. 登录到 WatchGuard Firebox 管理界面。\n\n2. 导航到 `Network` > `Routing`。\n\n3. 点击 `Add` 添加静态路由。\n\n4. 配置静态路由参数:\n a. 在 `Network` 中输入 `10.1.1.0/24`。\n b. 在 `Gateway` 中输入 `192.168.1.1`。\n c. 选择 `Interface` 为适当的接口。\n\n5. 点击 `Save` 保存配置。\n\n6. 点击 `Apply` 应用配置。
+,WatchGuard Firebox,,配置安全策略以允许 HTTP 流量从内部网络到外部网络。,源接口: LAN，目标接口: WAN，服务: HTTP。,1. 登录到 WatchGuard Firebox 管理界面。\n\n2. 导航到 `Firewall` > `Policy`。\n\n3. 点击 `Add Policy` 添加新的安全策略。\n\n4. 配置安全策略参数:\n a. 设置 `Name` 为所需名称。\n b. 设置 `From` 为 `LAN`。\n c. 设置 `To` 为 `WAN`。\n d. 设置 `Service` 为 `HTTP`。\n e. 设置 `Action` 为 `Allow`。\n\n5. 点击 `Save` 保存配置。\n\n6. 点击 `Apply` 应用配置。
+,WatchGuard Firebox,,配置NAT以将内部服务器的私有IP映射到公共IP。,内部服务器 IP 地址: 192.168.1.10，公共 IP 地址: 203.0.113.10。,1. 登录到 WatchGuard Firebox 管理界面。\n\n2. 导航到 `Firewall` > `NAT`。\n\n3. 点击 `Add` 添加 NAT 规则。\n\n4. 配置 NAT 规则参数:\n a. 设置 `Name` 为所需名称。\n b. 设置 `Original IP` 为 `192.168.1.10`。\n c. 设置 `Translated IP` 为 `203.0.113.10`。\n\n5. 点击 `Save` 保存配置。\n\n6. 点击 `Apply` 应用配置。
+,WatchGuard Firebox,,配置 VPN 以允许远程用户通过安全通道访问内部网络。,VPN 网关 IP 地址: 203.0.113.20。,1. 登录到 WatchGuard Firebox 管理界面。\n\n2. 导航到 `VPN` > `Branch Office VPN`。\n\n3. 点击 `Add` 添加 VPN 配置。\n\n4. 配置 VPN 参数:\n a. 设置 `VPN Type` 为 `IPsec`。\n b. 设置 `Gateway Name` 为所需名称。\n c. 设置 `Gateway Address` 为 `203.0.113.20`。\n d. 输入 `Shared Secret`。\n\n5. 配置 `Local` 和 `Remote` 网络。\n\n6. 点击 `Save` 保存配置。\n\n7. 点击 `Activate` 应用配置。
+,WatchGuard Firebox,,配置防火墙升级以确保设备运行最新的安全特性。,新固件版本: 12.6.4。,1. 登录到 WatchGuard Firebox 管理界面。\n\n2. 导航到 `System` > `Upgrade OS`。\n\n3. 点击 `Check for Upgrade` 并选择版本 12.6.4 的固件文件。\n\n4. 点击 `Download and Install`。\n\n5. 固件下载完成后，点击 `Upgrade` 升级设备。\n\n6. 升级完成后，设备将自动重启并应用新的固件版本。
+,Sophos XG Firewall,"{
+  ""instruction"": ""配置静态路由以将流量引导到特定的下一跳网关。"",
+  ""input"": ""目标网络: 10.1.1.0/24，下一跳网关: 192.168.1.1。"",
+  ""output"": ""1. 登录到 Sophos XG Firewall 管理界面。\n\n2. 导航到 `Routing` > `Static Routing`。\n\n3. 点击 `Add` 按钮添加静态路由。\n\n4. 配置静态路由参数:\n   a. 在 `Destination Network` 字段中输入 `10.1.1.0/24`。\n   b. 在 `Gateway` 字段中输入 `192.168.1.1`。\n   c. 选择相应的接口。\n\n5. 点击 `Save` 保存配置。\n\n6. 确认静态路由已添加到路由表中。""
+}",,,
+,Sophos XG Firewall,"{
+  ""instruction"": ""配置安全策略以允许 HTTP 流量从内部网络到外部网络。"",
+  ""input"": ""源接口: 内部网络，目标接口: 外部网络，服务: HTTP。"",
+  ""output"": ""1. 登录到 Sophos XG Firewall 管理界面。\n\n2. 导航到 `Policies` > `Add Policy`。\n\n3. 选择 `User/Network Rule`。\n\n4. 配置安全策略参数:\n   a. 设置 `Name` 为所需名称。\n   b. 设置 `Source Zone` 为 `LAN`。\n   c. 设置 `Destination Zone` 为 `WAN`。\n   d. 设置 `Service` 为 `HTTP`。\n   e. 设置 `Action` 为 `Accept`。\n\n5. 点击 `Save` 保存配置。\n\n6. 确认策略已添加并启用。""
+}",,,
+,Sophos XG Firewall,"{
+  ""instruction"": ""配置NAT以将内部服务器的私有IP映射到公共IP。"",
+  ""input"": ""内部服务器 IP 地址: 192.168.1.10，公共 IP 地址: 203.0.113.10。"",
+  ""output"": ""1. 登录到 Sophos XG Firewall 管理界面。\n\n2. 导航到 `Routing` > `NAT`。\n\n3. 点击 `Add NAT Rule` 按钮添加 NAT 规则。\n\n4. 配置 NAT 规则参数:\n   a. 设置 `Original Source` 为 `192.168.1.10`。\n   b. 设置 `Translated Source` 为 `203.0.113.10`。\n   c. 设置 `Original Destination` 和 `Translated Destination` 为相应的地址。\n\n5. 点击 `Save` 保存配置。\n\n6. 确认 NAT 规则已添加并启用。""
+}",,,
+,Sophos XG Firewall,"{
+  ""instruction"": ""配置 VPN 以允许远程用户通过安全通道访问内部网络。"",
+  ""input"": ""VPN 网关 IP 地址: 203.0.113.20。"",
+  ""output"": ""1. 登录到 Sophos XG Firewall 管理界面。\n\n2. 导航到 `VPN` > `IPsec`。\n\n3. 点击 `Add` 按钮添加 VPN 配置。\n\n4. 配置 VPN 参数:\n   a. 设置 `Connection Type` 为 `Site-to-Site`。\n   b. 设置 `Gateway Type` 为 `Initiator` 或 `Responder`。\n   c. 在 `Gateway Address` 字段中输入 `203.0.113.20`。\n   d. 配置 `Authentication` 和 `Encryption` 设置。\n\n5. 点击 `Save` 保存配置。\n\n6. 启动 VPN 连接并验证其是否正常工作。""
+}",,,
+,Sophos XG Firewall,"{
+  ""instruction"": ""配置防火墙升级以确保设备运行最新的安全特性。"",
+  ""input"": ""新固件版本: 18.0.4。"",
+  ""output"": ""1. 登录到 Sophos XG Firewall 管理界面。\n\n2. 导航到 `Backup & Firmware` > `Firmware`。\n\n3. 点击 `Check for Updates` 按钮检查最新的固件版本。\n\n4. 选择版本 18.0.4 并点击 `Download` 按钮下载固件。\n\n5. 下载完成后，点击 `Install` 按钮安装固件。\n\n6. 安装完成后，防火墙将自动重启并应用新的固件版本。\n\n7. 登录回管理界面并验证升级是否成功。""
+}",,,
+,Juniper Networks SRX,"{
+  ""instruction"": ""配置静态路由以将流量引导到特定的下一跳网关。"",
+  ""input"": ""目标网络: 10.1.1.0/24，下一跳网关: 192.168.1.1。"",
+  ""output"": ""1. 登录到 Juniper SRX 的 CLI。\n\n2. 输入配置模式:\n   ```
+   configure
+   ```\n\n3. 添加静态路由:\n   ```
+   set routing-options static route 10.1.1.0/24 next-hop 192.168.1.1
+   ```\n\n4. 提交配置:\n   ```
+   commit
+   ```\n\n5. 验证静态路由:\n   ```
+   show route
+   ```""
+}",,,
+,Juniper Networks SRX,"{
+  ""instruction"": ""配置安全策略以允许 HTTP 流量从内部网络到外部网络。"",
+  ""input"": ""源接口: trust，目标接口: untrust，服务: HTTP。"",
+  ""output"": ""1. 登录到 Juniper SRX 的 CLI。\n\n2. 输入配置模式:\n   ```
+   configure
+   ```\n\n3. 创建安全策略:\n   ```
+   set security policies from-zone trust to-zone untrust policy allow-http match source-address any destination-address any application junos-http
+   set security policies from-zone trust to-zone untrust policy allow-http then permit
+   ```\n\n4. 提交配置:\n   ```
+   commit
+   ```\n\n5. 验证策略:\n   ```
+   show security policies
+   ```""
+}",,,
+,Juniper Networks SRX,"{
+  ""instruction"": ""配置NAT以将内部服务器的私有IP映射到公共IP。"",
+  ""input"": ""内部服务器 IP 地址: 192.168.1.10，公共 IP 地址: 203.0.113.10。"",
+  ""output"": ""1. 登录到 Juniper SRX 的 CLI。\n\n2. 输入配置模式:\n   ```
+   configure
+   ```\n\n3. 配置源 NAT:\n   ```
+   set security nat source rule-set src-nat from zone trust
+   set security nat source rule-set src-nat to zone untrust
+   set security nat source rule-set src-nat rule nat-rule match source-address 192.168.1.10/32
+   set security nat source rule-set src-nat rule nat-rule then source-nat interface
+   ```\n\n4. 提交配置:\n   ```
+   commit
+   ```\n\n5. 验证 NAT 配置:\n   ```
+   show security nat source
+   ```""
+}",,,
+,Juniper Networks SRX,"{
+  ""instruction"": ""配置 VPN 以允许远程用户通过安全通道访问内部网络。"",
+  ""input"": ""VPN 网关 IP 地址: 203.0.113.20。"",
+  ""output"": ""1. 登录到 Juniper SRX 的 CLI。\n\n2. 输入配置模式:\n   ```
+   configure
+   ```\n\n3. 配置 IPsec VPN:\n   ```
+   set interfaces st0.0 unit 0 family inet address 10.1.1.1/24
+   set security ike policy ike-policy mode main
+   set security ike policy ike-policy proposals ike-phase1
+   set security ike policy ike-policy pre-shared-key ascii-text 'your-secret-key'
+   set security ipsec policy ipsec-policy proposals ipsec-phase2
+   set security ipsec policy ipsec-policy protocol esp
+   set security ipsec vpn vpn-name bind-interface st0.0
+   set security ipsec vpn vpn-name ike gateway gateway-name
+   set security ipsec vpn vpn-name ike ipsec-policy ipsec-policy
+   ```\n\n4. 提交配置:\n   ```
+   commit
+   ```\n\n5. 验证 VPN 配置:\n   ```
+   show security vpn
+   ```""
+}",,,
+,Juniper Networks SRX,"{
+  ""instruction"": ""配置防火墙升级以确保设备运行最新的安全特性。"",
+  ""input"": ""新固件版本: 20.4R3。"",
+  ""output"": ""1. 登录到 Juniper SRX 的 CLI。\n\n2. 下载新固件到设备:\n   ```
+   request system software add /var/tmp/junos-install-mx-20.4R3.tgz
+   ```\n\n3. 安装新固件:\n   ```
+   request system software add /var/tmp/junos-install-mx-20.4R3.tgz
+   ```\n\n4. 重启设备以完成安装:\n   ```
+   request system reboot
+   ```\n\n5. 登录回管理界面并确认升级是否成功:\n   ```
+   show version
+   ```""
+}",,,
+,pfSense,"{
+  ""instruction"": ""配置静态路由以将流量引导到特定的下一跳网关。"",
+  ""input"": ""目标网络: 10.1.1.0/24，下一跳网关: 192.168.1.1。"",
+  ""output"": ""1. 登录到 pfSense 的 Web 界面。\n\n2. 导航到 `System` > `Routing`。\n\n3. 在 `Routes` 选项卡下，点击 `Add` 按钮添加新路由。\n\n4. 配置静态路由参数:\n   a. 在 `Destination network` 字段中输入 `10.1.1.0/24`。\n   b. 在 `Gateway` 字段中选择或输入 `192.168.1.1`。\n\n5. 点击 `Save` 保存配置。\n\n6. 点击 `Apply Changes` 应用更改。\n\n7. 验证静态路由:\n   ```
+   Diagnostics > Routes
+   ```""
+}
+",,,
+,pfSense,"{
+  ""instruction"": ""配置防火墙规则以允许 HTTP 流量从内部网络到外部网络。"",
+  ""input"": ""接口: LAN，源: any，目标: any，服务: HTTP。"",
+  ""output"": ""1. 登录到 pfSense 的 Web 界面。\n\n2. 导航到 `Firewall` > `Rules` > `LAN`。\n\n3. 点击 `Add` 按钮添加新规则。\n\n4. 配置防火墙规则参数:\n   a. 在 `Action` 字段中选择 `Pass`。\n   b. 在 `Interface` 字段中选择 `LAN`。\n   c. 在 `Source` 字段中选择 `any`。\n   d. 在 `Destination` 字段中选择 `any`。\n   e. 在 `Protocol` 字段中选择 `TCP`，并在 `Destination port range` 字段中选择 `80` (HTTP)。\n\n5. 点击 `Save` 保存规则。\n\n6. 点击 `Apply Changes` 应用更改。\n\n7. 验证防火墙规则:\n   ```
+   Firewall > Rules
+   ```""
+}",,,
+,pfSense,"{
+  ""instruction"": ""配置 NAT 以将内部服务器的私有 IP 映射到公共 IP。"",
+  ""input"": ""内部服务器 IP 地址: 192.168.1.10，公共 IP 地址: 203.0.113.10。"",
+  ""output"": ""1. 登录到 pfSense 的 Web 界面。\n\n2. 导航到 `Firewall` > `NAT` > `Outbound`。\n\n3. 选择 `Manual Outbound NAT rule generation`。\n\n4. 点击 `Add` 按钮添加新的 NAT 规则。\n\n5. 配置 NAT 规则参数:\n   a. 在 `Interface` 字段中选择 `WAN`。\n   b. 在 `Source` 字段中输入 `192.168.1.10/32`。\n   c. 在 `Translation` 字段中选择 `Address`，并输入 `203.0.113.10`。\n\n6. 点击 `Save` 保存规则。\n\n7. 点击 `Apply Changes` 应用更改。\n\n8. 验证 NAT 配置:\n   ```
+   Diagnostics > States
+   ```""
+}
+",,,
+,pfSense,"{
+  ""instruction"": ""配置 VPN 以允许远程用户通过安全通道访问内部网络。"",
+  ""input"": ""VPN 类型: OpenVPN，远程用户 IP 范围: 10.2.2.0/24。"",
+  ""output"": ""1. 登录到 pfSense 的 Web 界面。\n\n2. 导航到 `VPN` > `OpenVPN`。\n\n3. 在 `Servers` 选项卡下，点击 `Add` 按钮添加新服务器配置。\n\n4. 配置 VPN 服务器参数:\n   a. 在 `Server Mode` 字段中选择 `Remote Access (SSL/TLS)`。\n   b. 配置 `Protocol` 和 `Device Mode`。\n   c. 配置 `Local Network` 为 `10.2.2.0/24`。\n   d. 配置 `Tunnel Network` 为 `10.3.3.0/24`。\n\n5. 点击 `Save` 保存服务器配置。\n\n6. 导航到 `Client Export` 选项卡并下载客户端配置文件。\n\n7. 验证 VPN 连接:\n   ```
+   Status > OpenVPN
+   ```""
+}
+",,,
+,pfSense,"{
+  ""instruction"": ""配置防火墙升级以确保设备运行最新的安全特性。"",
+  ""input"": ""新固件版本: 22.05。"",
+  ""output"": ""1. 登录到 pfSense 的 Web 界面。\n\n2. 导航到 `System` > `Firmware`。\n\n3. 在 `Updates` 选项卡下，点击 `Check for Updates` 按钮。\n\n4. 选择版本 `22.05` 并点击 `Download` 按钮。\n\n5. 点击 `Upgrade` 按钮进行固件升级。\n\n6. 系统会自动重启以完成升级。\n\n7. 登录回管理界面并验证升级是否成功:\n   ```
+   System > Firmware
+   ```""
+}
+",,,
+,OpnSense,"{
+  ""instruction"": ""配置静态路由以将流量引导到特定的下一跳网关。"",
+  ""input"": ""目标网络: 10.1.1.0/24，下一跳网关: 192.168.1.1。"",
+  ""output"": ""1. 登录到 OpnSense 的 Web 界面。\n\n2. 导航到 `System` > `Routing`。\n\n3. 在 `Static Routes` 选项卡下，点击 `Add` 按钮添加新路由。\n\n4. 配置静态路由参数:\n   a. 在 `Destination Network` 字段中输入 `10.1.1.0/24`。\n   b. 在 `Gateway` 字段中选择或输入 `192.168.1.1`。\n\n5. 点击 `Save` 保存路由。\n\n6. 点击 `Apply Changes` 应用更改。\n\n7. 验证静态路由:\n   ```
+   Diagnostics > Routes
+   ```""
+}
+",,,
+,OpnSense,"{
+  ""instruction"": ""配置防火墙规则以允许 HTTP 流量从内部网络到外部网络。"",
+  ""input"": ""接口: LAN，源: any，目标: any，服务: HTTP。"",
+  ""output"": ""1. 登录到 OpnSense 的 Web 界面。\n\n2. 导航到 `Firewall` > `Rules` > `LAN`。\n\n3. 点击 `Add` 按钮添加新规则。\n\n4. 配置防火墙规则参数:\n   a. 在 `Action` 字段中选择 `Pass`。\n   b. 在 `Interface` 字段中选择 `LAN`。\n   c. 在 `Source` 字段中选择 `any`。\n   d. 在 `Destination` 字段中选择 `any`。\n   e. 在 `Protocol` 字段中选择 `TCP`，并在 `Destination port range` 字段中选择 `80` (HTTP)。\n\n5. 点击 `Save` 保存规则。\n\n6. 点击 `Apply Changes` 应用更改。\n\n7. 验证防火墙规则:\n   ```
+   Firewall > Rules
+   ```""
+}
+",,,
+,OpnSense,"{
+  ""instruction"": ""配置 NAT 以将内部服务器的私有 IP 映射到公共 IP。"",
+  ""input"": ""内部服务器 IP 地址: 192.168.1.10，公共 IP 地址: 203.0.113.10。"",
+  ""output"": ""1. 登录到 OpnSense 的 Web 界面。\n\n2. 导航到 `Firewall` > `NAT` > `Outbound`。\n\n3. 选择 `Hybrid Outbound NAT rule generation` 或 `Manual Outbound NAT rule generation`。\n\n4. 点击 `Add` 按钮添加新的 NAT 规则。\n\n5. 配置 NAT 规则参数:\n   a. 在 `Interface` 字段中选择 `WAN`。\n   b. 在 `Source` 字段中输入 `192.168.1.10/32`。\n   c. 在 `Translation` 字段中选择 `Address` 并输入 `203.0.113.10`。\n\n6. 点击 `Save` 保存规则。\n\n7. 点击 `Apply Changes` 应用更改。\n\n8. 验证 NAT 配置:\n   ```
+   Diagnostics > States
+   ```""
+}
+",,,
+,OpnSense,"{
+  ""instruction"": ""配置 VPN 以允许远程用户通过安全通道访问内部网络。"",
+  ""input"": ""VPN 类型: OpenVPN，远程用户 IP 范围: 10.2.2.0/24。"",
+  ""output"": ""1. 登录到 OpnSense 的 Web 界面。\n\n2. 导航到 `VPN` > `OpenVPN`。\n\n3. 在 `Servers` 选项卡下，点击 `Add` 按钮添加新服务器配置。\n\n4. 配置 VPN 服务器参数:\n   a. 在 `Server Mode` 字段中选择 `Remote Access (SSL/TLS)`。\n   b. 配置 `Protocol` 和 `Device Mode`。\n   c. 配置 `Local Network` 为 `10.2.2.0/24`。\n   d. 配置 `Tunnel Network` 为 `10.3.3.0/24`。\n\n5. 点击 `Save` 保存服务器配置。\n\n6. 导航到 `Client Export` 选项卡并下载客户端配置文件。\n\n7. 验证 VPN 连接:\n   ```
+   Status > OpenVPN
+   ```""
+}
+",,,
+,OpnSense,"{
+  ""instruction"": ""配置防火墙升级以确保设备运行最新的安全特性。"",
+  ""input"": ""新固件版本: 22.05。"",
+  ""output"": ""1. 登录到 OpnSense 的 Web 界面。\n\n2. 导航到 `System` > `Firmware`。\n\n3. 在 `Updates` 选项卡下，点击 `Check for Updates` 按钮。\n\n4. 选择版本 `22.05` 并点击 `Download` 按钮。\n\n5. 点击 `Upgrade` 按钮进行固件升级。\n\n6. 系统会自动重启以完成升级。\n\n7. 登录回管理界面并验证升级是否成功:\n   ```
+   System > Firmware
+   ```""
+}
+",,,
+,Hillstone Networks,"{
+  ""instruction"": ""配置静态路由以将流量引导到特定的下一跳网关。"",
+  ""input"": ""目标网络: 10.1.1.0/24，下一跳网关: 192.168.1.1。"",
+  ""output"": ""1. 登录到 Hillstone Networks 的 Web 界面。\n\n2. 导航到 `Network` > `Routing`。\n\n3. 在 `Static Routes` 选项卡下，点击 `Add` 按钮添加新路由。\n\n4. 配置静态路由参数:\n   a. 在 `Destination Network` 字段中输入 `10.1.1.0/24`。\n   b. 在 `Gateway` 字段中输入 `192.168.1.1`。\n\n5. 点击 `Save` 保存路由。\n\n6. 点击 `Apply` 应用更改。\n\n7. 验证静态路由:\n   ```
+   Network > Routing > Static Routes
+   ```""
+}
+",,,
+,Hillstone Networks,"{
+  ""instruction"": ""配置防火墙规则以允许 HTTP 流量从内部网络到外部网络。"",
+  ""input"": ""接口: LAN，源: any，目标: any，服务: HTTP。"",
+  ""output"": ""1. 登录到 Hillstone Networks 的 Web 界面。\n\n2. 导航到 `Security` > `Firewall` > `Rules`。\n\n3. 在 `LAN` 选项卡下，点击 `Add` 按钮添加新规则。\n\n4. 配置防火墙规则参数:\n   a. 在 `Action` 字段中选择 `Allow`。\n   b. 在 `Interface` 字段中选择 `LAN`。\n   c. 在 `Source` 字段中选择 `any`。\n   d. 在 `Destination` 字段中选择 `any`。\n   e. 在 `Service` 字段中选择 `HTTP`。\n\n5. 点击 `Save` 保存规则。\n\n6. 点击 `Apply` 应用更改。\n\n7. 验证防火墙规则:\n   ```
+   Security > Firewall > Rules > LAN
+   ```""
+}
+",,,
+,Hillstone Networks,"{
+  ""instruction"": ""配置 NAT 以将内部服务器的私有 IP 映射到公共 IP。"",
+  ""input"": ""内部服务器 IP 地址: 192.168.1.10，公共 IP 地址: 203.0.113.10。"",
+  ""output"": ""1. 登录到 Hillstone Networks 的 Web 界面。\n\n2. 导航到 `Network` > `NAT` > `Outbound`。\n\n3. 选择 `Manual NAT` 模式。\n\n4. 点击 `Add` 按钮添加新的 NAT 规则。\n\n5. 配置 NAT 规则参数:\n   a. 在 `Interface` 字段中选择 `WAN`。\n   b. 在 `Source Address` 字段中输入 `192.168.1.10`。\n   c. 在 `Translated Address` 字段中输入 `203.0.113.10`。\n\n6. 点击 `Save` 保存规则。\n\n7. 点击 `Apply` 应用更改。\n\n8. 验证 NAT 配置:\n   ```
+   Network > NAT > Outbound
+   ```""
+}
+",,,
+,Hillstone Networks,"{
+  ""instruction"": ""配置 VPN 以允许远程用户通过安全通道访问内部网络。"",
+  ""input"": ""VPN 类型: IPsec，远程用户 IP 范围: 10.2.2.0/24。"",
+  ""output"": ""1. 登录到 Hillstone Networks 的 Web 界面。\n\n2. 导航到 `VPN` > `IPsec` > `Settings`。\n\n3. 点击 `Add` 按钮添加新 VPN 配置。\n\n4. 配置 VPN 服务器参数:\n   a. 在 `VPN Type` 字段中选择 `IPsec`。\n   b. 配置 `Local Network` 为 `10.2.2.0/24`。\n   c. 配置 `Remote Network` 为 `10.3.3.0/24`。\n   d. 配置 `Gateway` 和 `Pre-shared Key`。\n\n5. 点击 `Save` 保存 VPN 配置。\n\n6. 导航到 `VPN` > `IPsec` > `Status` 并验证 VPN 连接状态。\n\n7. 验证 VPN 连接:\n   ```
+   VPN > IPsec > Status
+   ```""
+}
+",,,
+,Hillstone Networks,"{
+  ""instruction"": ""配置防火墙升级以确保设备运行最新的安全特性。"",
+  ""input"": ""新固件版本: 22.05。"",
+  ""output"": ""1. 登录到 Hillstone Networks 的 Web 界面。\n\n2. 导航到 `System` > `Firmware`。\n\n3. 点击 `Check for Updates` 按钮检查是否有新固件版本。\n\n4. 选择版本 `22.05` 并点击 `Download` 按钮。\n\n5. 点击 `Upgrade` 按钮进行固件升级。\n\n6. 系统会自动重启以完成升级。\n\n7. 登录回管理界面并验证升级是否成功:\n   ```
+   System > Firmware
+   ```""
+}
+",,,
+,Untangle NG Firewall,"{
+  ""instruction"": ""配置静态路由以将流量引导到特定的下一跳网关。"",
+  ""input"": ""目标网络: 10.1.1.0/24，下一跳网关: 192.168.1.1。"",
+  ""output"": ""1. 登录到 Untangle NG Firewall 的 Web 界面。\n\n2. 导航到 `Config` > `Network`。\n\n3. 在 `Routing` 选项卡下，点击 `Add Route` 按钮添加新路由。\n\n4. 配置静态路由参数:\n   a. 在 `Destination Network` 字段中输入 `10.1.1.0/24`。\n   b. 在 `Gateway` 字段中输入 `192.168.1.1`。\n\n5. 点击 `Save` 保存路由。\n\n6. 点击 `Apply` 应用更改。\n\n7. 验证静态路由:\n   ```
+   Config > Network > Routing
+   ```""
+}
+",,,
+,Untangle NG Firewall,"{
+  ""instruction"": ""配置防火墙规则以允许 HTTP 流量从内部网络到外部网络。"",
+  ""input"": ""接口: LAN，源: any，目标: any，服务: HTTP。"",
+  ""output"": ""1. 登录到 Untangle NG Firewall 的 Web 界面。\n\n2. 导航到 `Config` > `Firewall`。\n\n3. 在 `Rules` 选项卡下，点击 `Add` 按钮添加新规则。\n\n4. 配置防火墙规则参数:\n   a. 在 `Action` 字段中选择 `Accept`。\n   b. 在 `Interface` 字段中选择 `LAN`。\n   c. 在 `Source` 字段中选择 `any`。\n   d. 在 `Destination` 字段中选择 `any`。\n   e. 在 `Service` 字段中选择 `HTTP`。\n\n5. 点击 `Save` 保存规则。\n\n6. 点击 `Apply` 应用更改。\n\n7. 验证防火墙规则:\n   ```
+   Config > Firewall > Rules
+   ```""
+}
+",,,
+,Untangle NG Firewall,"{
+  ""instruction"": ""配置 NAT 以将内部服务器的私有 IP 映射到公共 IP。"",
+  ""input"": ""内部服务器 IP 地址: 192.168.1.10，公共 IP 地址: 203.0.113.10。"",
+  ""output"": ""1. 登录到 Untangle NG Firewall 的 Web 界面。\n\n2. 导航到 `Config` > `Firewall` > `NAT`。\n\n3. 点击 `Add` 按钮添加新的 NAT 规则。\n\n4. 配置 NAT 规则参数:\n   a. 在 `Action` 字段中选择 `SNAT`。\n   b. 在 `Source` 字段中输入 `192.168.1.10`。\n   c. 在 `Destination` 字段中输入 `any`。\n   d. 在 `Translation` 字段中输入 `203.0.113.10`。\n\n5. 点击 `Save` 保存规则。\n\n6. 点击 `Apply` 应用更改。\n\n7. 验证 NAT 配置:\n   ```
+   Config > Firewall > NAT
+   ```""
+}
+",,,
+,Untangle NG Firewall,"{
+  ""instruction"": ""配置 VPN 以允许远程用户通过安全通道访问内部网络。"",
+  ""input"": ""VPN 类型: OpenVPN，远程用户 IP 范围: 10.2.2.0/24。"",
+  ""output"": ""1. 登录到 Untangle NG Firewall 的 Web 界面。\n\n2. 导航到 `Config` > `VPN`。\n\n3. 在 `OpenVPN` 选项卡下，点击 `Add` 按钮添加新 VPN 配置。\n\n4. 配置 VPN 服务器参数:\n   a. 在 `VPN Type` 字段中选择 `OpenVPN`。\n   b. 配置 `Local Network` 为 `10.2.2.0/24`。\n   c. 配置 `Remote Network` 为 `10.3.3.0/24`。\n   d. 配置 `Server Address` 和 `Port`。\n\n5. 点击 `Save` 保存 VPN 配置。\n\n6. 导航到 `Status` 选项卡并验证 VPN 连接状态。\n\n7. 验证 VPN 连接:\n   ```
+   Config > VPN > OpenVPN > Status
+   ```""
+}
+",,,
+,Untangle NG Firewall,"{
+  ""instruction"": ""配置防火墙升级以确保设备运行最新的安全特性。"",
+  ""input"": ""新固件版本: 22.05。"",
+  ""output"": ""1. 登录到 Untangle NG Firewall 的 Web 界面。\n\n2. 导航到 `Config` > `Software`。\n\n3. 点击 `Check for Updates` 按钮检查是否有新固件版本。\n\n4. 选择版本 `22.05` 并点击 `Download` 按钮。\n\n5. 点击 `Upgrade` 按钮进行固件升级。\n\n6. 系统会自动重启以完成升级。\n\n7. 登录回管理界面并验证升级是否成功:\n   ```
+   Config > Software
+   ```""
+}
+",,,
+,NSFOCUS,"{
+  ""instruction"": ""配置静态路由以将流量引导到特定的下一跳网关。"",
+  ""input"": ""目标网络: 10.1.1.0/24，下一跳网关: 192.168.1.1。"",
+  ""output"": ""1. 登录到 NSFOCUS 的 Web 界面。\n\n2. 导航到 `Network` > `Routing`。\n\n3. 点击 `Add` 按钮以添加新的静态路由。\n\n4. 配置静态路由参数:\n   a. 在 `Destination Network` 字段中输入 `10.1.1.0/24`。\n   b. 在 `Gateway` 字段中输入 `192.168.1.1`。\n\n5. 点击 `Save` 保存路由。\n\n6. 点击 `Apply` 应用更改。\n\n7. 验证静态路由配置:\n   ```
+   Network > Routing
+   ```""
+}
+",,,
+,NSFOCUS,"{
+  ""instruction"": ""配置防火墙规则以允许 HTTP 流量从内部网络到外部网络。"",
+  ""input"": ""接口: LAN，源: any，目标: any，服务: HTTP。"",
+  ""output"": ""1. 登录到 NSFOCUS 的 Web 界面。\n\n2. 导航到 `Security` > `Firewall`。\n\n3. 在 `Rules` 选项卡下，点击 `Add` 按钮以添加新的防火墙规则。\n\n4. 配置防火墙规则参数:\n   a. 在 `Action` 字段中选择 `Allow`。\n   b. 在 `Interface` 字段中选择 `LAN`。\n   c. 在 `Source` 字段中选择 `any`。\n   d. 在 `Destination` 字段中选择 `any`。\n   e. 在 `Service` 字段中选择 `HTTP`。\n\n5. 点击 `Save` 保存规则。\n\n6. 点击 `Apply` 应用更改。\n\n7. 验证防火墙规则:\n   ```
+   Security > Firewall > Rules
+   ```""
+}
+",,,
+,NSFOCUS,"{
+  ""instruction"": ""配置 NAT 以将内部服务器的私有 IP 映射到公共 IP。"",
+  ""input"": ""内部服务器 IP 地址: 192.168.1.10，公共 IP 地址: 203.0.113.10。"",
+  ""output"": ""1. 登录到 NSFOCUS 的 Web 界面。\n\n2. 导航到 `Network` > `NAT`。\n\n3. 点击 `Add` 按钮以添加新的 NAT 规则。\n\n4. 配置 NAT 规则参数:\n   a. 在 `Type` 字段中选择 `SNAT`。\n   b. 在 `Source Address` 字段中输入 `192.168.1.10`。\n   c. 在 `Destination Address` 字段中选择 `any`。\n   d. 在 `Translated Address` 字段中输入 `203.0.113.10`。\n\n5. 点击 `Save` 保存规则。\n\n6. 点击 `Apply` 应用更改。\n\n7. 验证 NAT 配置:\n   ```
+   Network > NAT
+   ```""
+}
+",,,
+,NSFOCUS,"{
+  ""instruction"": ""配置 VPN 以允许远程用户通过安全通道访问内部网络。"",
+  ""input"": ""VPN 类型: IPsec，远程用户 IP 范围: 10.2.2.0/24。"",
+  ""output"": ""1. 登录到 NSFOCUS 的 Web 界面。\n\n2. 导航到 `VPN` > `IPsec`。\n\n3. 点击 `Add` 按钮以添加新的 VPN 配置。\n\n4. 配置 VPN 参数:\n   a. 在 `VPN Type` 字段中选择 `IPsec`。\n   b. 在 `Local Network` 字段中输入 `10.2.2.0/24`。\n   c. 在 `Remote Network` 字段中输入 `10.3.3.0/24`。\n   d. 配置 `Gateway` 和 `Pre-shared Key`。\n\n5. 点击 `Save` 保存 VPN 配置。\n\n6. 导航到 `Status` 选项卡并验证 VPN 连接状态。\n\n7. 验证 VPN 连接:\n   ```
+   VPN > IPsec > Status
+   ```""
+}
+",,,
+,NSFOCUS,"{
+  ""instruction"": ""配置防火墙升级以确保设备运行最新的安全特性。"",
+  ""input"": ""新固件版本: 22.05。"",
+  ""output"": ""1. 登录到 NSFOCUS 的 Web 界面。\n\n2. 导航到 `System` > `Firmware`。\n\n3. 点击 `Check for Updates` 按钮检查是否有新固件版本。\n\n4. 选择版本 `22.05` 并点击 `Download` 按钮。\n\n5. 点击 `Upgrade` 按钮进行固件升级。\n\n6. 系统会自动重启以完成升级。\n\n7. 登录回管理界面并验证升级是否成功:\n   ```
+   System > Firmware
+   ```""
+}
+",,,
+,F5 Networks BIG-IP ASM (Application Security Manager),"{
+  ""instruction"": ""配置基本的安全策略以保护 Web 应用免受常见攻击。"",
+  ""input"": ""策略名称: 'DefaultPolicy'，保护级别: 'Medium'。"",
+  ""output"": ""1. 登录到 F5 BIG-IP ASM 的 Web 界面。\n\n2. 导航到 `Security` > `Application Security` > `Security Policies`。\n\n3. 点击 `Create` 按钮以创建新的安全策略。\n\n4. 配置策略参数:\n   a. 在 `Policy Name` 字段中输入 `DefaultPolicy`。\n   b. 在 `Protection Level` 字段中选择 `Medium`。\n\n5. 点击 `Finished` 完成策略创建。\n\n6. 导航到 `Security` > `Application Security` > `Application List`。\n\n7. 选择要应用策略的应用，并点击 `Manage Policy`。\n\n8. 选择 `DefaultPolicy` 并点击 `Apply`。\n\n9. 点击 `Apply Policy` 以应用策略。\n\n10. 验证策略应用:\n   ```
+   Security > Application Security > Security Policies
+   ```""
+}
+",,,
+,F5 Networks BIG-IP ASM (Application Security Manager),"{
+  ""instruction"": ""配置 IP 黑名单以阻止特定 IP 地址访问应用。"",
+  ""input"": ""IP 地址: 192.168.1.100，黑名单类型: 'Deny'。"",
+  ""output"": ""1. 登录到 F5 BIG-IP ASM 的 Web 界面。\n\n2. 导航到 `Security` > `Application Security` > `IP Intelligence`。\n\n3. 点击 `Blacklist` 选项卡。\n\n4. 点击 `Create` 按钮以添加新的黑名单规则。\n\n5. 配置黑名单规则参数:\n   a. 在 `IP Address` 字段中输入 `192.168.1.100`。\n   b. 在 `Blacklist Type` 字段中选择 `Deny`。\n\n6. 点击 `Save` 保存黑名单规则。\n\n7. 点击 `Apply Changes` 应用更改。\n\n8. 验证黑名单配置:\n   ```
+   Security > Application Security > IP Intelligence > Blacklist
+   ```""
+}
+",,,
+,F5 Networks BIG-IP ASM (Application Security Manager),"{
+  ""instruction"": ""配置 SSL/TLS 加密以确保数据传输的安全性。"",
+  ""input"": ""SSL 证书: 'example_cert.pem'，私钥: 'example_key.pem'。"",
+  ""output"": ""1. 登录到 F5 BIG-IP ASM 的 Web 界面。\n\n2. 导航到 `Local Traffic` > `SSL Certificates`。\n\n3. 点击 `Import` 按钮以导入 SSL 证书和私钥。\n\n4. 配置证书导入参数:\n   a. 在 `Certificate` 字段中选择 `example_cert.pem`。\n   b. 在 `Private Key` 字段中选择 `example_key.pem`。\n\n5. 点击 `Import` 导入证书和私钥。\n\n6. 导航到 `Local Traffic` > `Profiles` > `SSL`。\n\n7. 点击 `Create` 按钮以创建新的 SSL 配置文件。\n\n8. 配置 SSL 配置文件参数:\n   a. 在 `Profile Name` 字段中输入 `SSLProfile`。\n   b. 在 `Certificate` 字段中选择导入的证书。\n   c. 在 `Key` 字段中选择导入的私钥。\n\n9. 点击 `Finished` 保存 SSL 配置文件。\n\n10. 应用 SSL 配置文件:\n   ```
+   Local Traffic > Profiles > SSL
+   ```""
+}
+",,,
+,F5 Networks BIG-IP ASM (Application Security Manager),"{
+  ""instruction"": ""配置 Web 应用防火墙规则以防止 SQL 注入攻击。"",
+  ""input"": ""规则类型: 'SQL Injection'，策略: 'DefaultPolicy'。"",
+  ""output"": ""1. 登录到 F5 BIG-IP ASM 的 Web 界面。\n\n2. 导航到 `Security` > `Application Security` > `WAF Policies`。\n\n3. 选择 `DefaultPolicy` 并点击 `Edit`。\n\n4. 导航到 `Attack Signatures` 选项卡。\n\n5. 在 `Signature Type` 下拉列表中选择 `SQL Injection`。\n\n6. 配置规则参数，如启用或禁用特定的 SQL 注入签名。\n\n7. 点击 `Save` 保存 WAF 规则。\n\n8. 点击 `Apply Policy` 应用 WAF 规则。\n\n9. 验证 WAF 规则配置:\n   ```
+   Security > Application Security > WAF Policies > Attack Signatures
+   ```""
+}
+",,,
+,F5 Networks BIG-IP ASM (Application Security Manager),"{
+  ""instruction"": ""配置应用程序保护以防止 DDoS 攻击。"",
+  ""input"": ""保护级别: 'High'，保护策略: 'DDoSPolicy'。"",
+  ""output"": ""1. 登录到 F5 BIG-IP ASM 的 Web 界面。\n\n2. 导航到 `Security` > `Application Security` > `DoS Protection`。\n\n3. 点击 `Create` 按钮以创建新的保护策略。\n\n4. 配置保护策略参数:\n   a. 在 `Policy Name` 字段中输入 `DDoSPolicy`。\n   b. 在 `Protection Level` 字段中选择 `High`。\n\n5. 点击 `Save` 保存保护策略。\n\n6. 导航到 `Security` > `Application Security` > `Application List`。\n\n7. 选择要应用保护策略的应用，并点击 `Manage Policy`。\n\n8. 选择 `DDoSPolicy` 并点击 `Apply`。\n\n9. 点击 `Apply Policy` 应用保护策略。\n\n10. 验证保护策略应用:\n   ```
+   Security > Application Security > DoS Protection
+   ```""
+}
+",,,
+,FireEye Network Security and Forensics,"{
+  ""instruction"": ""配置基本的网络监控设置以开始流量分析。"",
+  ""input"": ""监控接口: 'eth0'，监控级别: 'High'。"",
+  ""output"": ""1. 登录到 FireEye 的 Web 界面。\n\n2. 导航到 `Network` > `Interfaces`。\n\n3. 选择 `eth0` 接口并点击 `Edit`。\n\n4. 在 `Monitoring Level` 字段中选择 `High`。\n\n5. 点击 `Save` 保存配置。\n\n6. 导航到 `Network` > `Traffic`。\n\n7. 确保流量监控已启动，并验证 `eth0` 接口的流量数据。\n\n8. 验证监控配置:\n   ```
+   Network > Interfaces > Traffic
+   ```""
+}
+",,,
+,FireEye Network Security and Forensics,"{
+  ""instruction"": ""配置恶意流量检测规则以检测异常活动。"",
+  ""input"": ""规则名称: 'MaliciousTrafficRule'，规则类型: 'Anomaly Detection'。"",
+  ""output"": ""1. 登录到 FireEye 的 Web 界面。\n\n2. 导航到 `Security` > `Rules` > `Anomaly Detection`。\n\n3. 点击 `Create` 按钮以创建新的检测规则。\n\n4. 配置规则参数:\n   a. 在 `Rule Name` 字段中输入 `MaliciousTrafficRule`。\n   b. 在 `Rule Type` 字段中选择 `Anomaly Detection`。\n\n5. 点击 `Save` 保存检测规则。\n\n6. 导航到 `Security` > `Alerts`。\n\n7. 确保检测规则已经生效并检查是否有触发的警报。\n\n8. 验证检测规则配置:\n   ```
+   Security > Rules > Anomaly Detection > Alerts
+   ```""
+}
+",,,
+,FireEye Network Security and Forensics,"{
+  ""instruction"": ""配置自定义通知以便在检测到特定事件时发送警报。"",
+  ""input"": ""通知名称: 'CriticalAlerts'，通知类型: 'Email'，收件人: 'admin@example.com'。"",
+  ""output"": ""1. 登录到 FireEye 的 Web 界面。\n\n2. 导航到 `Settings` > `Notifications`。\n\n3. 点击 `Create` 按钮以创建新的通知配置。\n\n4. 配置通知参数:\n   a. 在 `Notification Name` 字段中输入 `CriticalAlerts`。\n   b. 在 `Notification Type` 字段中选择 `Email`。\n   c. 在 `Recipients` 字段中输入 `admin@example.com`。\n\n5. 点击 `Save` 保存通知配置。\n\n6. 导航到 `Settings` > `Alerts`。\n\n7. 确保 `CriticalAlerts` 通知已启用并验证发送情况。\n\n8. 验证通知配置:\n   ```
+   Settings > Notifications > Alerts
+   ```""
+}
+",,,
+,FireEye Network Security and Forensics,"{
+  ""instruction"": ""配置流量捕获以记录和分析网络流量。"",
+  ""input"": ""捕获接口: 'eth1'，捕获模式: 'Full Packet Capture'。"",
+  ""output"": ""1. 登录到 FireEye 的 Web 界面。\n\n2. 导航到 `Network` > `Capture`。\n\n3. 选择 `eth1` 接口并点击 `Configure`。\n\n4. 在 `Capture Mode` 字段中选择 `Full Packet Capture`。\n\n5. 配置捕获设置，如捕获大小和时间限制。\n\n6. 点击 `Save` 保存捕获配置。\n\n7. 导航到 `Network` > `Captured Data`。\n\n8. 确保流量捕获已经启动，并验证捕获的数据。\n\n9. 验证流量捕获配置:\n   ```
+   Network > Capture > Captured Data
+   ```""
+}
+",,,
+,FireEye Network Security and Forensics,"{
+  ""instruction"": ""配置事件响应规则以自动响应特定的安全事件。"",
+  ""input"": ""规则名称: 'AutoBlockRule'，触发条件: 'MaliciousActivity'，响应动作: 'Block IP'。"",
+  ""output"": ""1. 登录到 FireEye 的 Web 界面。\n\n2. 导航到 `Security` > `Event Response` > `Rules`。\n\n3. 点击 `Create` 按钮以创建新的事件响应规则。\n\n4. 配置规则参数:\n   a. 在 `Rule Name` 字段中输入 `AutoBlockRule`。\n   b. 在 `Trigger Condition` 字段中选择 `MaliciousActivity`。\n   c. 在 `Response Action` 字段中选择 `Block IP`。\n\n5. 点击 `Save` 保存事件响应规则。\n\n6. 导航到 `Security` > `Event Logs`。\n\n7. 确保 `AutoBlockRule` 已生效并检查响应动作。\n\n8. 验证事件响应规则配置:\n   ```
+   Security > Event Response > Rules > Event Logs
+   ```""
+}
+",,,
+,Radware DefensePro,"{
+  ""instruction"": ""配置基本的流量监控以开始监测网络流量。"",
+  ""input"": ""监控接口: 'eth0'，监控级别: 'High'。"",
+  ""output"": ""1. 登录到 Radware DefensePro 的 Web 界面。\n\n2. 导航到 `Network` > `Interfaces`。\n\n3. 选择 `eth0` 接口并点击 `Edit`。\n\n4. 在 `Monitoring Level` 字段中选择 `High`。\n\n5. 点击 `Save` 保存配置。\n\n6. 导航到 `Monitor` > `Traffic`。\n\n7. 确保流量监控已启动并验证 `eth0` 接口的流量数据。\n\n8. 验证流量监控配置:\n   ```
+   Monitor > Traffic
+   ```""
+}
+",,,
+,Radware DefensePro,"{
+  ""instruction"": ""配置流量过滤规则以阻止特定类型的流量。"",
+  ""input"": ""规则名称: 'BlockMaliciousTraffic'，流量类型: 'Malicious'。"",
+  ""output"": ""1. 登录到 Radware DefensePro 的 Web 界面。\n\n2. 导航到 `Security` > `Traffic Filtering` > `Rules`。\n\n3. 点击 `Create` 按钮以创建新的过滤规则。\n\n4. 配置规则参数:\n   a. 在 `Rule Name` 字段中输入 `BlockMaliciousTraffic`。\n   b. 在 `Traffic Type` 字段中选择 `Malicious`。\n\n5. 点击 `Save` 保存过滤规则。\n\n6. 导航到 `Security` > `Traffic Filtering` > `Rules`。\n\n7. 确保 `BlockMaliciousTraffic` 规则已启用并检查是否生效。\n\n8. 验证过滤规则配置:\n   ```
+   Security > Traffic Filtering > Rules
+   ```""
+}
+",,,
+,Radware DefensePro,"{
+  ""instruction"": ""配置攻击防御策略以防御各种攻击类型。"",
+  ""input"": ""策略名称: 'DDoSProtection'，策略类型: 'DDoS'。"",
+  ""output"": ""1. 登录到 Radware DefensePro 的 Web 界面。\n\n2. 导航到 `Security` > `Protection` > `Policies`。\n\n3. 点击 `Create` 按钮以创建新的防御策略。\n\n4. 配置策略参数:\n   a. 在 `Policy Name` 字段中输入 `DDoSProtection`。\n   b. 在 `Policy Type` 字段中选择 `DDoS`。\n\n5. 配置策略详细设置，如防御阈值和响应动作。\n\n6. 点击 `Save` 保存防御策略。\n\n7. 导航到 `Security` > `Protection` > `Policies`。\n\n8. 确保 `DDoSProtection` 策略已启用并验证效果。\n\n9. 验证防御策略配置:\n   ```
+   Security > Protection > Policies
+   ```""
+}
+",,,
+,Radware DefensePro,"{
+  ""instruction"": ""配置异常流量检测以识别异常行为。"",
+  ""input"": ""检测名称: 'AnomalyDetection'，检测类型: 'Behavioral'。"",
+  ""output"": ""1. 登录到 Radware DefensePro 的 Web 界面。\n\n2. 导航到 `Security` > `Anomaly Detection` > `Settings`。\n\n3. 点击 `Create` 按钮以创建新的异常检测配置。\n\n4. 配置检测参数:\n   a. 在 `Detection Name` 字段中输入 `AnomalyDetection`。\n   b. 在 `Detection Type` 字段中选择 `Behavioral`。\n\n5. 配置检测阈值和响应设置。\n\n6. 点击 `Save` 保存异常检测配置。\n\n7. 导航到 `Security` > `Anomaly Detection` > `Logs`。\n\n8. 确保异常检测已启用并检查检测日志。\n\n9. 验证异常检测配置:\n   ```
+   Security > Anomaly Detection > Logs
+   ```""
+}
+",,,
+,Radware DefensePro,"{
+  ""instruction"": ""配置事件响应以自动处理特定的安全事件。"",
+  ""input"": ""响应名称: 'AutoMitigation'，触发条件: 'MaliciousTraffic'，响应动作: 'Throttle'。"",
+  ""output"": ""1. 登录到 Radware DefensePro 的 Web 界面。\n\n2. 导航到 `Security` > `Event Response` > `Rules`。\n\n3. 点击 `Create` 按钮以创建新的事件响应规则。\n\n4. 配置规则参数:\n   a. 在 `Response Name` 字段中输入 `AutoMitigation`。\n   b. 在 `Trigger Condition` 字段中选择 `MaliciousTraffic`。\n   c. 在 `Response Action` 字段中选择 `Throttle`。\n\n5. 点击 `Save` 保存事件响应规则。\n\n6. 导航到 `Security` > `Event Response` > `Logs`。\n\n7. 确保 `AutoMitigation` 响应已生效并检查响应日志。\n\n8. 验证事件响应规则配置:\n   ```
+   Security > Event Response > Logs
+   ```""
+}
+",,,
+,Trend Micro TippingPoint,"{
+  ""instruction"": ""配置基本的流量监控以开始流量分析。"",
+  ""input"": ""监控接口: 'eth0'，监控级别: 'High'。"",
+  ""output"": ""1. 登录到 Trend Micro TippingPoint 的 Web 界面。\n\n2. 导航到 `Network` > `Interfaces`。\n\n3. 选择 `eth0` 接口并点击 `Edit`。\n\n4. 在 `Monitoring Level` 字段中选择 `High`。\n\n5. 点击 `Save` 保存配置。\n\n6. 导航到 `Monitor` > `Traffic`。\n\n7. 确保流量监控已启动并验证 `eth0` 接口的流量数据。\n\n8. 验证流量监控配置:\n   ```
+   Monitor > Traffic
+   ```""
+}
+",,,
+,Trend Micro TippingPoint,"{
+  ""instruction"": ""配置流量过滤规则以阻止特定类型的流量。"",
+  ""input"": ""规则名称: 'BlockMaliciousTraffic'，流量类型: 'Malicious'。"",
+  ""output"": ""1. 登录到 Trend Micro TippingPoint 的 Web 界面。\n\n2. 导航到 `Security` > `Filtering` > `Rules`。\n\n3. 点击 `Create` 按钮以创建新的过滤规则。\n\n4. 配置规则参数:\n   a. 在 `Rule Name` 字段中输入 `BlockMaliciousTraffic`。\n   b. 在 `Traffic Type` 字段中选择 `Malicious`。\n\n5. 点击 `Save` 保存过滤规则。\n\n6. 导航到 `Security` > `Filtering` > `Rules`。\n\n7. 确保 `BlockMaliciousTraffic` 规则已启用并检查是否生效。\n\n8. 验证过滤规则配置:\n   ```
+   Security > Filtering > Rules
+   ```""
+}
+",,,
+,Trend Micro TippingPoint,"{
+  ""instruction"": ""配置攻击防御策略以防御各种攻击类型。"",
+  ""input"": ""策略名称: 'DDoSProtection'，策略类型: 'DDoS'。"",
+  ""output"": ""1. 登录到 Trend Micro TippingPoint 的 Web 界面。\n\n2. 导航到 `Security` > `Protection` > `Policies`。\n\n3. 点击 `Create` 按钮以创建新的防御策略。\n\n4. 配置策略参数:\n   a. 在 `Policy Name` 字段中输入 `DDoSProtection`。\n   b. 在 `Policy Type` 字段中选择 `DDoS`。\n\n5. 配置策略详细设置，如防御阈值和响应动作。\n\n6. 点击 `Save` 保存防御策略。\n\n7. 导航到 `Security` > `Protection` > `Policies`。\n\n8. 确保 `DDoSProtection` 策略已启用并验证效果。\n\n9. 验证防御策略配置:\n   ```
+   Security > Protection > Policies
+   ```""
+}
+",,,
+,Trend Micro TippingPoint,"{
+  ""instruction"": ""配置异常流量检测以识别异常行为。"",
+  ""input"": ""检测名称: 'AnomalyDetection'，检测类型: 'Behavioral'。"",
+  ""output"": ""1. 登录到 Trend Micro TippingPoint 的 Web 界面。\n\n2. 导航到 `Security` > `Anomaly Detection` > `Settings`。\n\n3. 点击 `Create` 按钮以创建新的异常检测配置。\n\n4. 配置检测参数:\n   a. 在 `Detection Name` 字段中输入 `AnomalyDetection`。\n   b. 在 `Detection Type` 字段中选择 `Behavioral`。\n\n5. 配置检测阈值和响应设置。\n\n6. 点击 `Save` 保存异常检测配置。\n\n7. 导航到 `Security` > `Anomaly Detection` > `Logs`。\n\n8. 确保异常检测已启用并检查检测日志。\n\n9. 验证异常检测配置:\n   ```
+   Security > Anomaly Detection > Logs
+   ```""
+}
+",,,
+,Trend Micro TippingPoint,"{
+  ""instruction"": ""配置事件响应以自动处理特定的安全事件。"",
+  ""input"": ""响应名称: 'AutoMitigation'，触发条件: 'MaliciousTraffic'，响应动作: 'Throttle'。"",
+  ""output"": ""1. 登录到 Trend Micro TippingPoint 的 Web 界面。\n\n2. 导航到 `Security` > `Event Response` > `Rules`。\n\n3. 点击 `Create` 按钮以创建新的事件响应规则。\n\n4. 配置规则参数:\n   a. 在 `Response Name` 字段中输入 `AutoMitigation`。\n   b. 在 `Trigger Condition` 字段中选择 `MaliciousTraffic`。\n   c. 在 `Response Action` 字段中选择 `Throttle`。\n\n5. 点击 `Save` 保存事件响应规则。\n\n6. 导航到 `Security` > `Event Response` > `Logs`。\n\n7. 确保 `AutoMitigation` 响应已生效并检查响应日志。\n\n8. 验证事件响应规则配置:\n   ```
+   Security > Event Response > Logs
+   ```""
+}
+",,,
+,Arbor Networks APS (Advanced Protection System),"{
+  ""instruction"": ""配置流量监控以开始流量分析。"",
+  ""input"": ""接口: 'eth1'，监控级别: 'High'。"",
+  ""output"": ""1. 登录到 Arbor Networks APS 的 Web 界面。\n\n2. 导航到 `Network` > `Interfaces`。\n\n3. 选择 `eth1` 接口并点击 `Edit`。\n\n4. 在 `Monitoring Level` 字段中选择 `High`。\n\n5. 点击 `Save` 保存配置。\n\n6. 导航到 `Monitoring` > `Traffic`。\n\n7. 确保流量监控已启动并验证 `eth1` 接口的流量数据。\n\n8. 验证流量监控配置:\n   ```
+   Monitoring > Traffic
+   ```""
+}
+",,,
+,Arbor Networks APS (Advanced Protection System),"{
+  ""instruction"": ""配置攻击防御策略以防御各种网络攻击。"",
+  ""input"": ""策略名称: 'DDoSDefense'，策略类型: 'DDoS'。"",
+  ""output"": ""1. 登录到 Arbor Networks APS 的 Web 界面。\n\n2. 导航到 `Security` > `Protection` > `Policies`。\n\n3. 点击 `Create` 按钮以创建新的防御策略。\n\n4. 配置策略参数:\n   a. 在 `Policy Name` 字段中输入 `DDoSDefense`。\n   b. 在 `Policy Type` 字段中选择 `DDoS`。\n\n5. 配置策略详细设置，包括阈值和响应动作。\n\n6. 点击 `Save` 保存防御策略。\n\n7. 导航到 `Security` > `Protection` > `Policies`。\n\n8. 确保 `DDoSDefense` 策略已启用并检查策略状态。\n\n9. 验证防御策略配置:\n   ```
+   Security > Protection > Policies
+   ```""
+}
+",,,
+,Arbor Networks APS (Advanced Protection System),"{
+  ""instruction"": ""配置异常流量检测以识别并响应异常流量模式。"",
+  ""input"": ""检测名称: 'AnomalyDetection'，检测类型: 'Behavioral'。"",
+  ""output"": ""1. 登录到 Arbor Networks APS 的 Web 界面。\n\n2. 导航到 `Security` > `Anomaly Detection` > `Settings`。\n\n3. 点击 `Create` 按钮以创建新的异常检测配置。\n\n4. 配置检测参数:\n   a. 在 `Detection Name` 字段中输入 `AnomalyDetection`。\n   b. 在 `Detection Type` 字段中选择 `Behavioral`。\n\n5. 配置检测阈值和响应设置。\n\n6. 点击 `Save` 保存异常检测配置。\n\n7. 导航到 `Security` > `Anomaly Detection` > `Logs`。\n\n8. 确保异常检测已启用并检查检测日志。\n\n9. 验证异常检测配置:\n   ```
+   Security > Anomaly Detection > Logs
+   ```""
+}
+",,,
+,Arbor Networks APS (Advanced Protection System),"{
+  ""instruction"": ""配置事件响应以自动处理检测到的安全事件。"",
+  ""input"": ""响应名称: 'AutoMitigation'，触发条件: 'HighTraffic'，响应动作: 'RateLimit'。"",
+  ""output"": ""1. 登录到 Arbor Networks APS 的 Web 界面。\n\n2. 导航到 `Security` > `Event Response` > `Rules`。\n\n3. 点击 `Create` 按钮以创建新的事件响应规则。\n\n4. 配置规则参数:\n   a. 在 `Response Name` 字段中输入 `AutoMitigation`。\n   b. 在 `Trigger Condition` 字段中选择 `HighTraffic`。\n   c. 在 `Response Action` 字段中选择 `RateLimit`。\n\n5. 点击 `Save` 保存事件响应规则。\n\n6. 导航到 `Security` > `Event Response` > `Logs`。\n\n7. 确保 `AutoMitigation` 响应已生效并检查响应日志。\n\n8. 验证事件响应规则配置:\n   ```
+   Security > Event Response > Logs
+   ```""
+}
+",,,
+,Arbor Networks APS (Advanced Protection System),"{
+  ""instruction"": ""配置流量分析以监控和分析网络流量模式。"",
+  ""input"": ""分析名称: 'TrafficAnalysis'，分析类型: 'TrafficFlow'。"",
+  ""output"": ""1. 登录到 Arbor Networks APS 的 Web 界面。\n\n2. 导航到 `Analytics` > `Traffic Analysis` > `Settings`。\n\n3. 点击 `Create` 按钮以创建新的流量分析配置。\n\n4. 配置分析参数:\n   a. 在 `Analysis Name` 字段中输入 `TrafficAnalysis`。\n   b. 在 `Analysis Type` 字段中选择 `TrafficFlow`。\n\n5. 配置分析设置，包括数据采集频率和报告选项。\n\n6. 点击 `Save` 保存流量分析配置。\n\n7. 导航到 `Analytics` > `Traffic Analysis` > `Reports`。\n\n8. 确保流量分析已启用并检查生成的报告。\n\n9. 验证流量分析配置:\n   ```
+   Analytics > Traffic Analysis > Reports
+   ```""
+}
+",,,
+,Forcepoint Next Generation Firewall,"{
+  ""instruction"": ""配置基础防火墙策略以控制网络流量。"",
+  ""input"": ""策略名称: 'BaseFirewallPolicy'，源地址: '10.0.0.0/24'，目标地址: '192.168.1.0/24'，服务: 'Any'。"",
+  ""output"": ""1. 登录到 Forcepoint Next Generation Firewall 的管理界面。\n\n2. 导航到 `Policy` > `Firewall Rules`。\n\n3. 点击 `Add Rule` 按钮以创建新的防火墙规则。\n\n4. 配置规则参数:\n   a. 在 `Rule Name` 字段中输入 `BaseFirewallPolicy`。\n   b. 在 `Source Address` 字段中输入 `10.0.0.0/24`。\n   c. 在 `Destination Address` 字段中输入 `192.168.1.0/24`。\n   d. 在 `Service` 字段中选择 `Any`。\n\n5. 配置允许或拒绝的动作。\n\n6. 点击 `Save` 保存防火墙策略。\n\n7. 导航到 `Policy` > `Firewall Rules`。\n\n8. 确保 `BaseFirewallPolicy` 策略已启用并检查策略列表。\n\n9. 验证防火墙策略配置:\n   ```
+   Policy > Firewall Rules
+   ```""
+}
+",,,
+,Forcepoint Next Generation Firewall,"{
+  ""instruction"": ""配置VPN隧道以实现安全的远程访问。"",
+  ""input"": ""隧道名称: 'RemoteVPN'，隧道类型: 'IPsec'，远程网关: '203.0.113.1'，本地网关: '198.51.100.1'。"",
+  ""output"": ""1. 登录到 Forcepoint Next Generation Firewall 的管理界面。\n\n2. 导航到 `VPN` > `Site-to-Site`。\n\n3. 点击 `Add` 按钮以创建新的VPN隧道。\n\n4. 配置隧道参数:\n   a. 在 `Tunnel Name` 字段中输入 `RemoteVPN`。\n   b. 在 `Tunnel Type` 字段中选择 `IPsec`。\n   c. 在 `Remote Gateway` 字段中输入 `203.0.113.1`。\n   d. 在 `Local Gateway` 字段中输入 `198.51.100.1`。\n\n5. 配置加密和认证设置。\n\n6. 点击 `Save` 保存VPN配置。\n\n7. 导航到 `VPN` > `Site-to-Site`。\n\n8. 确保 `RemoteVPN` 隧道已启用并检查隧道状态。\n\n9. 验证VPN隧道配置:\n   ```
+   VPN > Site-to-Site
+   ```""
+}
+",,,
+,Forcepoint Next Generation Firewall,"{
+  ""instruction"": ""配置IDS/IPS以检测和阻止恶意流量。"",
+  ""input"": ""检测名称: 'IDS_Protection'，检测类型: 'Signature-Based'，策略: 'Prevent'。"",
+  ""output"": ""1. 登录到 Forcepoint Next Generation Firewall 的管理界面。\n\n2. 导航到 `Security` > `IDS/IPS`。\n\n3. 点击 `Add` 按钮以创建新的检测配置。\n\n4. 配置检测参数:\n   a. 在 `Detection Name` 字段中输入 `IDS_Protection`。\n   b. 在 `Detection Type` 字段中选择 `Signature-Based`。\n   c. 在 `Policy` 字段中选择 `Prevent`。\n\n5. 配置具体的检测规则和响应动作。\n\n6. 点击 `Save` 保存IDS/IPS配置。\n\n7. 导航到 `Security` > `IDS/IPS`。\n\n8. 确保 `IDS_Protection` 检测已启用并检查检测状态。\n\n9. 验证IDS/IPS配置:\n   ```
+   Security > IDS/IPS
+   ```""
+}
+",,,
+,Forcepoint Next Generation Firewall,"{
+  ""instruction"": ""配置应用程序控制以限制或允许特定应用程序流量。"",
+  ""input"": ""控制名称: 'AppControl'，应用程序: 'Facebook'，动作: 'Block'。"",
+  ""output"": ""1. 登录到 Forcepoint Next Generation Firewall 的管理界面。\n\n2. 导航到 `Security` > `Application Control`。\n\n3. 点击 `Add` 按钮以创建新的应用程序控制规则。\n\n4. 配置控制参数:\n   a. 在 `Control Name` 字段中输入 `AppControl`。\n   b. 在 `Application` 字段中选择 `Facebook`。\n   c. 在 `Action` 字段中选择 `Block`。\n\n5. 点击 `Save` 保存应用程序控制配置。\n\n6. 导航到 `Security` > `Application Control`。\n\n7. 确保 `AppControl` 规则已启用并检查规则列表。\n\n8. 验证应用程序控制配置:\n   ```
+   Security > Application Control
+   ```""
+}
+",,,
+,Forcepoint Next Generation Firewall,"{
+  ""instruction"": ""配置日志记录和报告以跟踪和分析安全事件。"",
+  ""input"": ""日志级别: 'High'，报告类型: 'Daily'。"",
+  ""output"": ""1. 登录到 Forcepoint Next Generation Firewall 的管理界面。\n\n2. 导航到 `Monitoring` > `Logging`。\n\n3. 点击 `Settings` 以配置日志记录选项。\n\n4. 配置日志参数:\n   a. 在 `Log Level` 字段中选择 `High`。\n   b. 在 `Report Type` 字段中选择 `Daily`。\n\n5. 点击 `Save` 保存日志配置。\n\n6. 导航到 `Monitoring` > `Reports`。\n\n7. 确保日志记录和报告设置已启用并检查生成的报告。\n\n8. 验证日志记录和报告配置:\n   ```
+   Monitoring > Reports
+   ```""
+}
+",,,
+,Bitdefender GravityZone Security for Network,"{
+  ""instruction"": ""配置网络防火墙规则以控制进入和离开网络的流量。"",
+  ""input"": ""规则名称: 'Allow_HTTP'，源地址: 'Any'，目标地址: '192.168.1.0/24'，服务: 'HTTP'，动作: 'Allow'。"",
+  ""output"": ""1. 登录到 Bitdefender GravityZone 控制台。\n\n2. 导航到 `Network Security` > `Firewall`。\n\n3. 点击 `Add Rule` 按钮以创建新的防火墙规则。\n\n4. 配置规则参数:\n   a. 在 `Rule Name` 字段中输入 `Allow_HTTP`。\n   b. 在 `Source Address` 字段中选择 `Any`。\n   c. 在 `Destination Address` 字段中输入 `192.168.1.0/24`。\n   d. 在 `Service` 字段中选择 `HTTP`。\n   e. 在 `Action` 字段中选择 `Allow`。\n\n5. 点击 `Save` 保存防火墙规则。\n\n6. 导航到 `Network Security` > `Firewall`。\n\n7. 确保 `Allow_HTTP` 规则已启用并检查规则列表。\n\n8. 验证防火墙规则配置:\n   ```
+   Network Security > Firewall
+   ```""
+}
+",,,
+,Bitdefender GravityZone Security for Network,"{
+  ""instruction"": ""配置IPS策略以检测和防御网络中的入侵行为。"",
+  ""input"": ""策略名称: 'DefaultIPS'，检测模式: 'Active'，策略类型: 'Predefined'。"",
+  ""output"": ""1. 登录到 Bitdefender GravityZone 控制台。\n\n2. 导航到 `Network Security` > `Intrusion Prevention`。\n\n3. 点击 `Add Policy` 按钮以创建新的IPS策略。\n\n4. 配置策略参数:\n   a. 在 `Policy Name` 字段中输入 `DefaultIPS`。\n   b. 在 `Detection Mode` 字段中选择 `Active`。\n   c. 在 `Policy Type` 字段中选择 `Predefined`。\n\n5. 点击 `Save` 保存IPS策略。\n\n6. 导航到 `Network Security` > `Intrusion Prevention`。\n\n7. 确保 `DefaultIPS` 策略已启用并检查策略列表。\n\n8. 验证IPS策略配置:\n   ```
+   Network Security > Intrusion Prevention
+   ```""
+}
+",,,
+,Bitdefender GravityZone Security for Network,"{
+  ""instruction"": ""配置VPN连接以实现安全的远程访问。"",
+  ""input"": ""连接名称: 'RemoteVPN'，VPN类型: 'IPsec'，远程网关: '203.0.113.1'，本地网关: '198.51.100.1'。"",
+  ""output"": ""1. 登录到 Bitdefender GravityZone 控制台。\n\n2. 导航到 `Network Security` > `VPN`。\n\n3. 点击 `Add Connection` 按钮以创建新的VPN连接。\n\n4. 配置连接参数:\n   a. 在 `Connection Name` 字段中输入 `RemoteVPN`。\n   b. 在 `VPN Type` 字段中选择 `IPsec`。\n   c. 在 `Remote Gateway` 字段中输入 `203.0.113.1`。\n   d. 在 `Local Gateway` 字段中输入 `198.51.100.1`。\n\n5. 配置加密和认证设置。\n\n6. 点击 `Save` 保存VPN连接配置。\n\n7. 导航到 `Network Security` > `VPN`。\n\n8. 确保 `RemoteVPN` 连接已启用并检查连接状态。\n\n9. 验证VPN连接配置:\n   ```
+   Network Security > VPN
+   ```""
+}
+",,,
+,Bitdefender GravityZone Security for Network,"{
+  ""instruction"": ""配置应用程序控制以限制或允许特定应用程序的网络流量。"",
+  ""input"": ""控制名称: 'AppControl'，应用程序: 'Skype'，动作: 'Block'。"",
+  ""output"": ""1. 登录到 Bitdefender GravityZone 控制台。\n\n2. 导航到 `Network Security` > `Application Control`。\n\n3. 点击 `Add Rule` 按钮以创建新的应用程序控制规则。\n\n4. 配置控制参数:\n   a. 在 `Control Name` 字段中输入 `AppControl`。\n   b. 在 `Application` 字段中选择 `Skype`。\n   c. 在 `Action` 字段中选择 `Block`。\n\n5. 点击 `Save` 保存应用程序控制规则。\n\n6. 导航到 `Network Security` > `Application Control`。\n\n7. 确保 `AppControl` 规则已启用并检查规则列表。\n\n8. 验证应用程序控制配置:\n   ```
+   Network Security > Application Control
+   ```""
+}
+",,,
+,Bitdefender GravityZone Security for Network,"{
+  ""instruction"": ""配置日志记录和报告以跟踪和分析网络安全事件。"",
+  ""input"": ""日志级别: 'High'，报告频率: 'Daily'。"",
+  ""output"": ""1. 登录到 Bitdefender GravityZone 控制台。\n\n2. 导航到 `Monitoring` > `Logging`。\n\n3. 点击 `Settings` 按钮以配置日志记录选项。\n\n4. 配置日志参数:\n   a. 在 `Log Level` 字段中选择 `High`。\n   b. 在 `Report Frequency` 字段中选择 `Daily`。\n\n5. 点击 `Save` 保存日志配置。\n\n6. 导航到 `Monitoring` > `Reports`。\n\n7. 确保日志记录和报告设置已启用并检查生成的报告。\n\n8. 验证日志记录和报告配置:\n   ```
+   Monitoring > Reports
+   ```""
+}
+",,,
+,AlienVault USM (Unified Security Management),"{
+  ""instruction"": ""配置资产发现以识别网络中的设备和系统。"",
+  ""input"": ""扫描范围: '192.168.1.0/24'，扫描类型: 'Full Network Scan'。"",
+  ""output"": ""1. 登录到 AlienVault USM 控制台。\n\n2. 导航到 `Configuration` > `Assets` > `Discovery`。\n\n3. 点击 `Add New Discovery` 按钮以创建新的资产发现任务。\n\n4. 配置发现任务参数:\n   a. 在 `Scan Range` 字段中输入 `192.168.1.0/24`。\n   b. 在 `Scan Type` 字段中选择 `Full Network Scan`。\n\n5. 点击 `Save` 保存资产发现配置。\n\n6. 导航到 `Configuration` > `Assets` > `Discovery`。\n\n7. 确保新创建的资产发现任务已启用并检查扫描结果。\n\n8. 验证资产发现配置:\n   ```
+   Configuration > Assets > Discovery
+   ```""
+}
+",,,
+,AlienVault USM (Unified Security Management),"{
+  ""instruction"": ""配置入侵检测系统以监控网络流量和检测恶意活动。"",
+  ""input"": ""IDS 类型: 'Snort'，规则集: 'ET Pro'，动作: 'Alert'。"",
+  ""output"": ""1. 登录到 AlienVault USM 控制台。\n\n2. 导航到 `Configuration` > `Sensors` > `IDS`。\n\n3. 点击 `Edit` 按钮以配置IDS设置。\n\n4. 配置IDS参数:\n   a. 在 `IDS Type` 字段中选择 `Snort`。\n   b. 在 `Rule Set` 字段中选择 `ET Pro`。\n   c. 在 `Action` 字段中选择 `Alert`。\n\n5. 点击 `Save` 保存IDS配置。\n\n6. 导航到 `Configuration` > `Sensors` > `IDS`。\n\n7. 确保IDS配置已启用并检查检测到的事件。\n\n8. 验证IDS配置:\n   ```
+   Configuration > Sensors > IDS
+   ```""
+}
+",,,
+,AlienVault USM (Unified Security Management),"{
+  ""instruction"": ""配置日志收集以集中管理和分析网络设备日志。"",
+  ""input"": ""日志源: 'Syslog'，日志服务器: '192.168.1.100'，端口: '514'。"",
+  ""output"": ""1. 登录到 AlienVault USM 控制台。\n\n2. 导航到 `Configuration` > `Log Collection` > `Syslog`。\n\n3. 点击 `Add Source` 按钮以添加新的日志源。\n\n4. 配置日志源参数:\n   a. 在 `Log Source` 字段中选择 `Syslog`。\n   b. 在 `Log Server` 字段中输入 `192.168.1.100`。\n   c. 在 `Port` 字段中输入 `514`。\n\n5. 点击 `Save` 保存日志收集配置。\n\n6. 导航到 `Configuration` > `Log Collection` > `Syslog`。\n\n7. 确保新的日志源已启用并检查收集到的日志数据。\n\n8. 验证日志收集配置:\n   ```
+   Configuration > Log Collection > Syslog
+   ```""
+}
+",,,
+,AlienVault USM (Unified Security Management),"{
+  ""instruction"": ""配置事件管理以处理和分析安全事件。"",
+  ""input"": ""事件类型: 'Malware', 规则集: 'Custom Rules', 动作: 'Generate Alert'。"",
+  ""output"": ""1. 登录到 AlienVault USM 控制台。\n\n2. 导航到 `Configuration` > `Event Management` > `Rules`。\n\n3. 点击 `Add Rule` 按钮以创建新的事件规则。\n\n4. 配置事件管理规则参数:\n   a. 在 `Event Type` 字段中选择 `Malware`。\n   b. 在 `Rule Set` 字段中选择 `Custom Rules`。\n   c. 在 `Action` 字段中选择 `Generate Alert`。\n\n5. 点击 `Save` 保存事件管理规则。\n\n6. 导航到 `Configuration` > `Event Management` > `Rules`。\n\n7. 确保新规则已启用并检查生成的警报。\n\n8. 验证事件管理规则:\n   ```
+   Configuration > Event Management > Rules
+   ```""
+}
+",,,
+,AlienVault USM (Unified Security Management),"{
+  ""instruction"": ""配置合规性监控以确保系统符合安全合规性要求。"",
+  ""input"": ""合规性标准: 'PCI-DSS', 监控类型: 'Compliance Report', 频率: 'Monthly'。"",
+  ""output"": ""1. 登录到 AlienVault USM 控制台。\n\n2. 导航到 `Compliance` > `Compliance Monitoring`。\n\n3. 点击 `Add Compliance Standard` 按钮以创建新的合规性监控任务。\n\n4. 配置合规性监控参数:\n   a. 在 `Compliance Standard` 字段中选择 `PCI-DSS`。\n   b. 在 `Monitoring Type` 字段中选择 `Compliance Report`。\n   c. 在 `Frequency` 字段中选择 `Monthly`。\n\n5. 点击 `Save` 保存合规性监控配置。\n\n6. 导航到 `Compliance` > `Compliance Monitoring`。\n\n7. 确保新的合规性监控任务已启用并检查生成的报告。\n\n8. 验证合规性监控配置:\n   ```
+   Compliance > Compliance Monitoring
+   ```""
+}
+",,,
+,McAfee Network Security Platform,"{
+  ""instruction"": ""配置资产发现以识别网络中的设备。"",
+  ""input"": ""扫描范围: '192.168.1.0/24'，扫描频率: 'Daily'。"",
+  ""output"": ""1. 登录到 McAfee Network Security Platform 管理界面。\n\n2. 导航到 `Assets` > `Discovery`。\n\n3. 点击 `Add Discovery` 按钮以创建新的资产发现任务。\n\n4. 配置发现任务参数:\n   a. 在 `Scan Range` 字段中输入 `192.168.1.0/24`。\n   b. 在 `Scan Frequency` 字段中选择 `Daily`。\n\n5. 点击 `Save` 保存资产发现配置。\n\n6. 导航到 `Assets` > `Discovery`。\n\n7. 确保新创建的资产发现任务已启用并检查扫描结果。\n\n8. 验证资产发现配置:\n   ```
+   Assets > Discovery
+   ```""
+}
+",,,
+,McAfee Network Security Platform,"{
+  ""instruction"": ""配置 IDS 策略以监控网络流量并检测异常活动。"",
+  ""input"": ""策略名称: 'Default IDS Policy'，检测模式: 'Active'，规则集: 'McAfee'。"",
+  ""output"": ""1. 登录到 McAfee Network Security Platform 管理界面。\n\n2. 导航到 `Policies` > `Intrusion Detection`。\n\n3. 点击 `Create Policy` 按钮以创建新的 IDS 策略。\n\n4. 配置 IDS 策略参数:\n   a. 在 `Policy Name` 字段中输入 `Default IDS Policy`。\n   b. 在 `Detection Mode` 字段中选择 `Active`。\n   c. 在 `Rule Set` 字段中选择 `McAfee`。\n\n5. 点击 `Save` 保存 IDS 策略。\n\n6. 导航到 `Policies` > `Intrusion Detection`。\n\n7. 确保新的 IDS 策略已启用并检查检测到的事件。\n\n8. 验证 IDS 策略配置:\n   ```
+   Policies > Intrusion Detection
+   ```""
+}
+",,,
+,McAfee Network Security Platform,"{
+  ""instruction"": ""配置日志收集以集中管理和分析网络设备日志。"",
+  ""input"": ""日志源: 'Syslog'，日志服务器: '192.168.1.100'，端口: '514'。"",
+  ""output"": ""1. 登录到 McAfee Network Security Platform 管理界面。\n\n2. 导航到 `Logs` > `Syslog Configuration`。\n\n3. 点击 `Add Server` 按钮以添加新的日志服务器。\n\n4. 配置日志服务器参数:\n   a. 在 `Log Source` 字段中选择 `Syslog`。\n   b. 在 `Server Address` 字段中输入 `192.168.1.100`。\n   c. 在 `Port` 字段中输入 `514`。\n\n5. 点击 `Save` 保存日志服务器配置。\n\n6. 导航到 `Logs` > `Syslog Configuration`。\n\n7. 确保日志服务器配置已启用并检查日志数据。\n\n8. 验证日志收集配置:\n   ```
+   Logs > Syslog Configuration
+   ```""
+}
+",,,
+,McAfee Network Security Platform,"{
+  ""instruction"": ""配置事件管理以处理和分析安全事件。"",
+  ""input"": ""事件类型: 'Malware', 规则集: 'McAfee Custom', 动作: 'Alert'。"",
+  ""output"": ""1. 登录到 McAfee Network Security Platform 管理界面。\n\n2. 导航到 `Event Management` > `Rules`。\n\n3. 点击 `Add Rule` 按钮以创建新的事件规则。\n\n4. 配置事件规则参数:\n   a. 在 `Event Type` 字段中选择 `Malware`。\n   b. 在 `Rule Set` 字段中选择 `McAfee Custom`。\n   c. 在 `Action` 字段中选择 `Alert`。\n\n5. 点击 `Save` 保存事件规则。\n\n6. 导航到 `Event Management` > `Rules`。\n\n7. 确保新规则已启用并检查生成的警报。\n\n8. 验证事件管理规则:\n   ```
+   Event Management > Rules
+   ```""
+}
+",,,
+,McAfee Network Security Platform,"{
+  ""instruction"": ""配置合规性监控以确保系统符合安全合规性要求。"",
+  ""input"": ""合规性标准: 'PCI-DSS', 监控类型: 'Compliance Report', 频率: 'Monthly'。"",
+  ""output"": ""1. 登录到 McAfee Network Security Platform 管理界面。\n\n2. 导航到 `Compliance` > `Monitoring`。\n\n3. 点击 `Add Compliance Task` 按钮以创建新的合规性监控任务。\n\n4. 配置合规性监控参数:\n   a. 在 `Compliance Standard` 字段中选择 `PCI-DSS`。\n   b. 在 `Monitoring Type` 字段中选择 `Compliance Report`。\n   c. 在 `Frequency` 字段中选择 `Monthly`。\n\n5. 点击 `Save` 保存合规性监控任务。\n\n6. 导航到 `Compliance` > `Monitoring`。\n\n7. 确保新的合规性监控任务已启用并检查生成的报告。\n\n8. 验证合规性监控配置:\n   ```
+   Compliance > Monitoring
+   ```""
+}
+",,,
+,Symantec Security Information Manager (SSIM),"{
+  ""instruction"": ""配置数据源以将日志数据发送到 Symantec Security Information Manager (SSIM)。"",
+  ""input"": ""数据源类型: 'Syslog'，服务器地址: '192.168.1.150'，端口: '514'。"",
+  ""output"": ""1. 登录到 Symantec Security Information Manager 管理界面。\n\n2. 导航到 `Data Sources` > `Add Source`。\n\n3. 选择 `Syslog` 作为数据源类型。\n\n4. 配置数据源参数:\n   a. 在 `Server Address` 字段中输入 `192.168.1.150`。\n   b. 在 `Port` 字段中输入 `514`。\n\n5. 点击 `Save` 保存数据源配置。\n\n6. 导航到 `Data Sources`。\n\n7. 确保新的数据源已启用并检查数据流入情况。\n\n8. 验证数据源配置:\n   ```
+   Data Sources > Add Source
+   ```""
+}
+",,,
+,Symantec Security Information Manager (SSIM),"{
+  ""instruction"": ""配置警报规则以监控特定事件并生成警报。"",
+  ""input"": ""规则名称: 'Critical Alerts'，事件类型: 'Failed Login'，严重性: 'Critical'。"",
+  ""output"": ""1. 登录到 Symantec Security Information Manager 管理界面。\n\n2. 导航到 `Alerts` > `Rules`。\n\n3. 点击 `Create Rule` 按钮以创建新的警报规则。\n\n4. 配置警报规则参数:\n   a. 在 `Rule Name` 字段中输入 `Critical Alerts`。\n   b. 在 `Event Type` 字段中选择 `Failed Login`。\n   c. 在 `Severity` 字段中选择 `Critical`。\n\n5. 点击 `Save` 保存警报规则。\n\n6. 导航到 `Alerts` > `Rules`。\n\n7. 确保新的警报规则已启用并检查生成的警报。\n\n8. 验证警报规则配置:\n   ```
+   Alerts > Rules
+   ```""
+}
+",,,
+,Symantec Security Information Manager (SSIM),"{
+  ""instruction"": ""配置日志归档以备份和存档日志数据。"",
+  ""input"": ""归档位置: '/var/log/ssim/archive'，归档频率: 'Weekly'。"",
+  ""output"": ""1. 登录到 Symantec Security Information Manager 管理界面。\n\n2. 导航到 `Logs` > `Archiving`。\n\n3. 点击 `Configure Archiving` 按钮以设置日志归档。\n\n4. 配置归档参数:\n   a. 在 `Archive Location` 字段中输入 `/var/log/ssim/archive`。\n   b. 在 `Archive Frequency` 字段中选择 `Weekly`。\n\n5. 点击 `Save` 保存归档配置。\n\n6. 导航到 `Logs` > `Archiving`。\n\n7. 确保日志归档设置已启用并检查归档的日志文件。\n\n8. 验证日志归档配置:\n   ```
+   Logs > Archiving
+   ```""
+}
+",,,
+,Symantec Security Information Manager (SSIM),"{
+  ""instruction"": ""配置事件管理以处理和响应检测到的安全事件。"",
+  ""input"": ""事件类型: 'Malware Detection'，处理动作: 'Quarantine'。"",
+  ""output"": ""1. 登录到 Symantec Security Information Manager 管理界面。\n\n2. 导航到 `Event Management` > `Rules`。\n\n3. 点击 `Add Rule` 按钮以创建新的事件规则。\n\n4. 配置事件管理参数:\n   a. 在 `Event Type` 字段中选择 `Malware Detection`。\n   b. 在 `Action` 字段中选择 `Quarantine`。\n\n5. 点击 `Save` 保存事件规则。\n\n6. 导航到 `Event Management` > `Rules`。\n\n7. 确保新规则已启用并检查事件响应情况。\n\n8. 验证事件管理规则配置:\n   ```
+   Event Management > Rules
+   ```""
+}
+",,,
+,Symantec Security Information Manager (SSIM),"{
+  ""instruction"": ""配置合规性报告以确保系统符合规定的安全标准。"",
+  ""input"": ""合规性标准: 'ISO 27001'，报告类型: 'Quarterly'。"",
+  ""output"": ""1. 登录到 Symantec Security Information Manager 管理界面。\n\n2. 导航到 `Compliance` > `Reports`。\n\n3. 点击 `Create Report` 按钮以创建新的合规性报告。\n\n4. 配置合规性报告参数:\n   a. 在 `Compliance Standard` 字段中选择 `ISO 27001`。\n   b. 在 `Report Type` 字段中选择 `Quarterly`。\n\n5. 点击 `Save` 保存报告配置。\n\n6. 导航到 `Compliance` > `Reports`。\n\n7. 确保新的合规性报告任务已启用并检查生成的报告。\n\n8. 验证合规性报告配置:\n   ```
+   Compliance > Reports
+   ```""
+}
+",,,
+,SolarWinds Security Event Manager,"{
+  ""instruction"": ""配置数据源以将日志数据发送到 SolarWinds Security Event Manager。"",
+  ""input"": ""数据源类型: 'Syslog'，服务器地址: '192.168.1.100'，端口: '514'。"",
+  ""output"": ""1. 登录到 SolarWinds Security Event Manager 管理界面。\n\n2. 导航到 `Settings` > `Data Sources`。\n\n3. 点击 `Add Source` 按钮以添加新的数据源。\n\n4. 配置数据源参数:\n   a. 在 `Data Source Type` 字段中选择 `Syslog`。\n   b. 在 `Server Address` 字段中输入 `192.168.1.100`。\n   c. 在 `Port` 字段中输入 `514`。\n\n5. 点击 `Save` 保存数据源配置。\n\n6. 导航到 `Data Sources` 确认新的数据源已成功添加。\n\n7. 检查数据源流入情况。\n\n8. 验证数据源配置:\n   ```
+   Settings > Data Sources
+   ```""
+}
+",,,
+,SolarWinds Security Event Manager,"{
+  ""instruction"": ""配置警报规则以监控特定事件并生成警报。"",
+  ""input"": ""规则名称: 'Critical Alerts'，事件类型: 'Failed Login'，严重性: 'High'。"",
+  ""output"": ""1. 登录到 SolarWinds Security Event Manager 管理界面。\n\n2. 导航到 `Alerts` > `Rules`。\n\n3. 点击 `Create Rule` 按钮以创建新的警报规则。\n\n4. 配置警报规则参数:\n   a. 在 `Rule Name` 字段中输入 `Critical Alerts`。\n   b. 在 `Event Type` 字段中选择 `Failed Login`。\n   c. 在 `Severity` 字段中选择 `High`。\n\n5. 点击 `Save` 保存警报规则。\n\n6. 导航到 `Alerts` > `Rules` 确认新规则已成功添加。\n\n7. 检查警报生成情况。\n\n8. 验证警报规则配置:\n   ```
+   Alerts > Rules
+   ```""
+}
+",,,
+,SolarWinds Security Event Manager,"{
+  ""instruction"": ""配置日志归档以备份和存档日志数据。"",
+  ""input"": ""归档位置: '/var/log/solarwinds/archive'，归档频率: 'Daily'。"",
+  ""output"": ""1. 登录到 SolarWinds Security Event Manager 管理界面。\n\n2. 导航到 `Logs` > `Archiving`。\n\n3. 点击 `Configure Archiving` 按钮以设置日志归档。\n\n4. 配置归档参数:\n   a. 在 `Archive Location` 字段中输入 `/var/log/solarwinds/archive`。\n   b. 在 `Archive Frequency` 字段中选择 `Daily`。\n\n5. 点击 `Save` 保存归档设置。\n\n6. 导航到 `Logs` > `Archiving` 确认归档设置已启用。\n\n7. 检查归档日志文件。\n\n8. 验证日志归档配置:\n   ```
+   Logs > Archiving
+   ```""
+}
+",,,
+,SolarWinds Security Event Manager,"{
+  ""instruction"": ""配置事件管理以处理和响应检测到的安全事件。"",
+  ""input"": ""事件类型: 'Malware Detection'，处理动作: 'Quarantine'。"",
+  ""output"": ""1. 登录到 SolarWinds Security Event Manager 管理界面。\n\n2. 导航到 `Event Management` > `Rules`。\n\n3. 点击 `Add Rule` 按钮以创建新的事件规则。\n\n4. 配置事件管理参数:\n   a. 在 `Event Type` 字段中选择 `Malware Detection`。\n   b. 在 `Action` 字段中选择 `Quarantine`。\n\n5. 点击 `Save` 保存事件规则。\n\n6. 导航到 `Event Management` > `Rules` 确认新规则已成功添加。\n\n7. 检查事件响应情况。\n\n8. 验证事件管理规则配置:\n   ```
+   Event Management > Rules
+   ```""
+}
+",,,
+,SolarWinds Security Event Manager,"{
+  ""instruction"": ""配置合规性报告以确保系统符合规定的安全标准。"",
+  ""input"": ""合规性标准: 'PCI-DSS'，报告类型: 'Monthly'。"",
+  ""output"": ""1. 登录到 SolarWinds Security Event Manager 管理界面。\n\n2. 导航到 `Compliance` > `Reports`。\n\n3. 点击 `Create Report` 按钮以创建新的合规性报告。\n\n4. 配置合规性报告参数:\n   a. 在 `Compliance Standard` 字段中选择 `PCI-DSS`。\n   b. 在 `Report Type` 字段中选择 `Monthly`。\n\n5. 点击 `Save` 保存报告设置。\n\n6. 导航到 `Compliance` > `Reports` 确认新的报告任务已成功创建。\n\n7. 检查生成的报告。\n\n8. 验证合规性报告配置:\n   ```
+   Compliance > Reports
+   ```""
+}
+",,,
